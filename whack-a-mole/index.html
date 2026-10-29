@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="icon" href="data:,">
+<title>菜园保卫战</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{
+  height:100%;width:100%;overflow:hidden;
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",sans-serif;
+  color:#4A3426;
+  -webkit-user-select:none;user-select:none;
+  -webkit-touch-callout:none;touch-action:manipulation;
+  background:linear-gradient(#BDE6FF,#EAF7FF);
+}
+button{font-family:inherit;cursor:pointer;border:none;outline:none;-webkit-tap-highlight-color:transparent}
+.screen{display:none;flex-direction:column;height:100%;width:100%;position:relative;overflow:hidden}
+.screen.active{display:flex}
+
+/* ---- Clouds ---- */
+.clouds{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+.cloud{
+  position:absolute;background:#fff;border-radius:50px;opacity:.85;
+  animation:drift linear infinite;
+}
+.cloud::before,.cloud::after{
+  content:"";position:absolute;background:#fff;border-radius:50%;
+}
+.cloud.c1{width:80px;height:28px;top:8%;left:-100px;animation-duration:48s}
+.cloud.c1::before{width:36px;height:36px;top:-18px;left:12px}
+.cloud.c1::after{width:48px;height:48px;top:-24px;left:32px}
+.cloud.c2{width:110px;height:32px;top:18%;left:-140px;animation-duration:62s;animation-delay:-20s}
+.cloud.c2::before{width:44px;height:44px;top:-22px;left:16px}
+.cloud.c2::after{width:56px;height:56px;top:-28px;left:40px}
+.cloud.c3{width:70px;height:24px;top:5%;left:-90px;animation-duration:55s;animation-delay:-35s}
+.cloud.c3::before{width:30px;height:30px;top:-14px;left:10px}
+.cloud.c3::after{width:40px;height:40px;top:-20px;left:28px}
+@keyframes drift{from{transform:translateX(0)}to{transform:translateX(calc(100vw + 200px))}}
+
+/* ---- MENU ---- */
+#menu{align-items:center;justify-content:center;padding:16px;z-index:1}
+#menu .inner{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:14px;max-width:420px;width:100%}
+.logo{
+  font-size:clamp(28px,8vw,44px);font-weight:900;text-align:center;line-height:1.25;
+  color:#FF7A59;
+  text-shadow:
+    -3px -3px 0 #fff,3px -3px 0 #fff,-3px 3px 0 #fff,3px 3px 0 #fff,
+    0 4px 0 #4A3426,0 6px 12px rgba(74,52,38,.25);
+  letter-spacing:.04em;
+}
+.logo small{display:block;font-size:.45em;color:#4A3426;letter-spacing:.15em;margin-top:4px;
+  text-shadow:-2px -2px 0 #fff,2px -2px 0 #fff,-2px 2px 0 #fff,2px 2px 0 #fff,0 2px 0 rgba(74,52,38,.3)}
+.mascot-wrap{width:120px;height:120px;display:flex;align-items:flex-end;justify-content:center}
+.mascot{width:90px;height:90px;animation:sway 1.6s ease-in-out infinite;transform-origin:50% 100%}
+@keyframes sway{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+.diff-btns{display:flex;flex-direction:column;gap:10px;width:100%}
+.diff-btn{
+  display:flex;align-items:center;justify-content:space-between;
+  background:#FF7A59;color:#fff;border:3px solid #4A3426;border-radius:18px;
+  padding:12px 18px;min-height:52px;font-size:18px;font-weight:700;
+  box-shadow:0 4px 0 #4A3426;transition:background .15s,transform .1s;
+}
+.diff-btn:hover{background:#FF9475}
+.diff-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #4A3426}
+.diff-btn .hs{font-size:13px;font-weight:600;opacity:.9}
+.menu-row{display:flex;gap:10px;width:100%;align-items:center}
+.ghost-btn{
+  background:#fff;color:#4A3426;border:3px solid #4A3426;border-radius:14px;
+  padding:10px 16px;min-height:44px;font-size:15px;font-weight:700;
+  box-shadow:0 3px 0 #4A3426;
+}
+.ghost-btn:active{transform:translateY(2px);box-shadow:0 1px 0 #4A3426}
+#muteBtn{min-width:44px;width:52px;font-size:20px;padding:8px}
+.howto{
+  width:100%;background:rgba(255,255,255,.75);border:3px solid #4A3426;border-radius:16px;
+  overflow:hidden;
+}
+.howto summary{
+  list-style:none;cursor:pointer;padding:12px 16px;font-weight:700;font-size:15px;
+  display:flex;align-items:center;justify-content:space-between;min-height:44px;
+}
+.howto summary::-webkit-details-marker{display:none}
+.howto summary::after{content:"▼";font-size:12px;transition:transform .2s}
+.howto[open] summary::after{transform:rotate(180deg)}
+.howto .body{padding:0 16px 14px;font-size:13px;line-height:1.7;color:#4A3426}
+.howto .body li{margin-left:1.1em}
+
+/* ---- GAME ---- */
+#game{background:linear-gradient(#BDE6FF 0%,#EAF7FF 28%,#8BD06A 28%,#6FB54F 100%)}
+#game .clouds{height:28%}
+.hud{
+  position:relative;z-index:2;width:100%;max-width:720px;margin:0 auto;
+  padding:10px 12px 8px;flex-shrink:0;
+}
+.topbar{
+  display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;
+}
+.stat{
+  background:rgba(255,255,255,.88);border:3px solid #4A3426;border-radius:12px;
+  padding:6px 12px;font-weight:800;font-size:15px;min-height:44px;
+  display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;
+  flex:0 0 auto;
+}
+.stat.score{font-size:15px}
+.stat.score .score-num{font-size:28px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
+.stat.combo{gap:6px}
+.mult-badge{
+  display:none;background:#F6C443;border:2px solid #4A3426;border-radius:8px;
+  padding:2px 7px;font-size:13px;font-weight:900;line-height:1.2;
+}
+.mult-badge.show{display:inline-block}
+.stat.timer{font-variant-numeric:tabular-nums;min-width:52px}
+.stat.timer.urgent{background:#FF6B6B;color:#fff;animation:pulse .5s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+#pauseBtn{
+  width:44px;height:44px;border-radius:12px;background:#fff;border:3px solid #4A3426;
+  font-size:18px;font-weight:800;box-shadow:0 3px 0 #4A3426;flex-shrink:0;
+}
+#pauseBtn:active{transform:translateY(2px);box-shadow:0 1px 0 #4A3426}
+.progress-wrap{margin-top:8px}
+.progress-bar{
+  height:10px;background:rgba(74,52,38,.2);border:2px solid #4A3426;border-radius:8px;overflow:hidden;
+}
+.progress-fill{height:100%;width:100%;background:#FF7A59;border-radius:5px;transition:width .1s linear}
+.progress-fill.urgent{background:#FF3B3B}
+
+.field{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  position:relative;z-index:1;padding:4px 8px;min-height:0;
+  cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cg transform='rotate(-35 24 24)'%3E%3Crect x='20' y='4' width='8' height='22' rx='3' fill='%238B5A2B' stroke='%234A3426' stroke-width='2'/%3E%3Crect x='14' y='24' width='20' height='14' rx='4' fill='%23C48A4A' stroke='%234A3426' stroke-width='2'/%3E%3C/g%3E%3C/svg%3E") 12 12, pointer;
+}
+.field.swing{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cg transform='rotate(15 24 24)'%3E%3Crect x='20' y='4' width='8' height='22' rx='3' fill='%238B5A2B' stroke='%234A3426' stroke-width='2'/%3E%3Crect x='14' y='24' width='20' height='14' rx='4' fill='%23C48A4A' stroke='%234A3426' stroke-width='2'/%3E%3C/g%3E%3C/svg%3E") 12 12, pointer;
+}
+/* Distant hills: bottom edge flush with grass top (28%), full viewport width */
+.sky-hills{
+  position:absolute;left:0;width:100%;
+  height:clamp(52px,9.5vh,96px);
+  top:calc(28% - clamp(52px,9.5vh,96px));
+  z-index:0;pointer-events:none;overflow:visible;display:block;
+}
+/* Fence sits on grass top edge; bottom slightly buried into grass */
+.sky-fence{
+  position:absolute;left:0;width:100%;
+  height:clamp(26px,4.2vh,38px);
+  top:calc(28% - 8px);
+  z-index:1;pointer-events:none;
+  display:flex;align-items:flex-end;justify-content:space-between;
+  padding:0 1.5%;gap:2%;
+}
+.sky-fence svg{flex:1 1 0;height:100%;max-width:140px;overflow:visible}
+.decor{position:absolute;inset:0;pointer-events:none;overflow:visible;z-index:0}
+.decor .tuft{position:absolute;overflow:visible;z-index:1}
+.grid{
+  position:relative;z-index:2;display:grid;gap:clamp(8px,2vw,16px);
+  width:min(92vw,520px);height:min(92vw,520px);max-height:100%;
+  aspect-ratio:1;
+}
+.grid.g3{grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr)}
+.grid.g4{grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,1fr)}
+
+/* Elliptical dirt mound with dark pit + front lip covering lower body */
+.hole{
+  position:relative;background:transparent;border:none;overflow:visible;
+}
+.dirt-mound{
+  position:absolute;left:3%;right:3%;bottom:2%;height:55%;
+  z-index:1;
+}
+.mound-back{
+  position:absolute;inset:0;
+  background:#7A4E2D;border:3px solid #4A3426;border-radius:50%;
+  box-shadow:
+    inset 0 10px 12px rgba(255,255,255,.28),
+    inset 0 -8px 12px rgba(0,0,0,.22);
+  z-index:0;
+}
+.pit{
+  position:absolute;left:15%;right:15%;top:12%;bottom:28%;
+  background:#3B2414;border-radius:50%;
+  box-shadow:inset 0 5px 14px rgba(0,0,0,.65);
+  z-index:1;
+}
+/* Clip sized so drawn body ≈75% of pit (pit=70% mound; SVG body≈67% of box → clip≈78% mound) */
+.char-clip{
+  position:absolute;left:11%;right:11%;bottom:26%;height:260%;
+  overflow:hidden;z-index:2;
+  border-radius:48% 48% 42% 42% / 16% 16% 42% 42%;
+  pointer-events:none;
+}
+.dirt-lip{
+  position:absolute;left:4%;right:4%;bottom:-2%;height:44%;
+  background:#7A4E2D;border:3px solid #4A3426;border-top-color:transparent;
+  border-radius:0 0 50% 50%;
+  box-shadow:inset 0 7px 8px rgba(255,255,255,.2);
+  z-index:3;pointer-events:none;
+}
+.char{
+  position:absolute;left:50%;bottom:0;width:100%;height:62%;
+  transform:translate(-50%,120%);transition:transform .22s cubic-bezier(.22,1.4,.36,1);
+  pointer-events:none;
+}
+/* Fully up: crown ~1 head above mound top; lower body tucked behind dirt-lip */
+.char.up{transform:translate(-50%,-8%)}
+.char.hit{transform:translate(-50%,10%) scaleY(.48) scaleX(1.22);transition:transform .12s ease-out}
+.char svg{width:100%;height:100%;display:block;overflow:visible}
+.float-score{
+  position:absolute;left:50%;top:8%;transform:translateX(-50%);
+  font-weight:900;font-size:clamp(14px,3.5vw,22px);color:#FF7A59;
+  text-shadow:-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff,1px 1px 0 #fff;
+  pointer-events:none;animation:floatUp .7s ease-out forwards;z-index:8;
+}
+.float-score.neg{color:#E74C3C}
+@keyframes floatUp{0%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-40px)}}
+.spark{
+  position:absolute;pointer-events:none;z-index:9;font-size:16px;animation:spark .5s ease-out forwards;
+}
+@keyframes spark{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.4)}}
+.hammer-fx{
+  position:absolute;width:56px;height:56px;pointer-events:none;z-index:20;
+  animation:hammerHit .28s ease-out forwards;
+}
+@keyframes hammerHit{
+  0%{transform:rotate(-40deg) scale(1);opacity:1}
+  40%{transform:rotate(10deg) scale(1.1)}
+  100%{transform:rotate(20deg) scale(.8);opacity:0}
+}
+
+.garden-wrap{
+  position:relative;z-index:2;display:flex;justify-content:center;
+  padding:6px 12px 12px;flex-shrink:0;
+}
+.garden-bed{
+  display:flex;justify-content:center;align-items:flex-end;gap:12px;
+  background:#5C3A1E;border:3px solid #4A3426;border-radius:18px;
+  padding:10px 18px 8px;min-height:64px;
+  box-shadow:inset 0 6px 10px rgba(0,0,0,.35),inset 0 -3px 0 rgba(255,255,255,.08),0 3px 0 rgba(74,52,38,.2);
+  position:relative;
+}
+.garden-bed::before,.garden-bed::after{
+  content:"";position:absolute;left:10%;right:10%;height:3px;border-radius:2px;
+  background:rgba(74,52,38,.35);pointer-events:none;
+}
+.garden-bed::before{top:28%}
+.garden-bed::after{top:55%}
+.carrot-slot{
+  width:40px;height:56px;position:relative;z-index:1;
+  transition:opacity .35s,transform .35s;
+}
+.carrot-slot.gone{opacity:0;transform:translateY(28px) rotate(35deg) scale(.7);pointer-events:none}
+.carrot-slot.steal{animation:carrotFall .45s ease-in forwards}
+@keyframes carrotFall{
+  0%{opacity:1;transform:translateY(0) rotate(0) scale(1)}
+  60%{opacity:.85;transform:translateY(14px) rotate(18deg) scale(.92)}
+  100%{opacity:0;transform:translateY(32px) rotate(42deg) scale(.65)}
+}
+.carrot-slot svg{width:100%;height:100%;display:block;overflow:visible}
+
+/* Pause overlay */
+#pauseOverlay{
+  display:none;position:absolute;inset:0;z-index:50;
+  background:rgba(74,52,38,.45);align-items:center;justify-content:center;
+  flex-direction:column;gap:16px;
+}
+#pauseOverlay.show{display:flex}
+#pauseOverlay h2{
+  font-size:36px;font-weight:900;color:#fff;
+  text-shadow:-3px -3px 0 #4A3426,3px -3px 0 #4A3426,-3px 3px 0 #4A3426,3px 3px 0 #4A3426;
+}
+#pauseOverlay .diff-btn{width:min(260px,80vw)}
+
+/* ---- OVER ---- */
+#over{align-items:center;justify-content:center;padding:16px}
+#over .card{
+  position:relative;z-index:1;background:rgba(255,255,255,.92);
+  border:3px solid #4A3426;border-radius:24px;padding:24px 20px;
+  width:min(400px,94vw);display:flex;flex-direction:column;align-items:center;gap:12px;
+  box-shadow:0 8px 0 #4A3426;
+}
+#over h2{font-size:28px;font-weight:900;color:#FF7A59;
+  text-shadow:-2px -2px 0 #fff,2px -2px 0 #fff,-2px 2px 0 #fff,2px 2px 0 #fff}
+.stars{font-size:40px;letter-spacing:6px;color:#F6C443;text-shadow:0 2px 0 #4A3426}
+.new-record{
+  display:none;background:#F6C443;border:3px solid #4A3426;border-radius:12px;
+  padding:6px 14px;font-weight:800;font-size:15px;animation:bounce .6s ease infinite;
+}
+.new-record.show{display:block}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+.stats-grid .cell{
+  background:#EAF7FF;border:2px solid #4A3426;border-radius:12px;padding:10px;text-align:center;
+}
+.stats-grid .cell .label{font-size:12px;opacity:.7}
+.stats-grid .cell .val{font-size:22px;font-weight:800}
+.over-btns{display:flex;flex-direction:column;gap:10px;width:100%}
+.confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:24px}
+.confetti i{
+  position:absolute;width:8px;height:14px;border-radius:2px;top:-20px;
+  animation:fall linear forwards;
+}
+@keyframes fall{to{transform:translateY(420px) rotate(720deg);opacity:.3}}
+
+@media(max-height:600px){
+  .mascot-wrap{width:80px;height:80px}
+  .mascot{width:60px;height:60px}
+  .logo{font-size:26px}
+  .garden-wrap{padding:4px 8px 8px}
+  .carrot-slot{width:36px;height:50px}
+  .stat.score .score-num{font-size:24px}
+}
+</style>
+</head>
+<body>
+
+<!-- MENU -->
+<div id="menu" class="screen active">
+  <div class="clouds">
+    <div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div>
+  </div>
+  <div class="inner">
+    <div class="logo">菜园保卫战<small>WHACK-A-MOLE</small></div>
+    <div class="mascot-wrap">
+      <div class="mascot" id="mascotSvg"></div>
+    </div>
+    <div class="diff-btns">
+      <button class="diff-btn" data-diff="easy"><span>🌱 简单</span><span class="hs" id="hs-easy">最高 0</span></button>
+      <button class="diff-btn" data-diff="normal"><span>🥕 普通</span><span class="hs" id="hs-normal">最高 0</span></button>
+      <button class="diff-btn" data-diff="hard"><span>⚔️ 困难</span><span class="hs" id="hs-hard">最高 0</span></button>
+    </div>
+    <div class="menu-row">
+      <details class="howto" style="flex:1">
+        <summary>玩法说明</summary>
+        <div class="body">
+          <ul>
+            <li>打棕色地鼠 +10，金色地鼠 +30，头盔地鼠需敲 2 下 +20</li>
+            <li>别打小兔子！打中 −15 并断连击</li>
+            <li>连续命中 5/10/20 次获得 ×1.5 / ×2 / ×3 倍率</li>
+            <li>漏掉金色地鼠会偷走一根胡萝卜，胡萝卜没了就结束</li>
+            <li>一局 60 秒，越打越快！</li>
+          </ul>
+        </div>
+      </details>
+      <button class="ghost-btn" id="muteBtn" title="静音">🔊</button>
+    </div>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="game" class="screen">
+  <div class="clouds">
+    <div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div>
+  </div>
+  <!-- Two-layer hills: full viewport width, foot flush with grass top at 28% -->
+  <svg class="sky-hills" viewBox="0 0 1200 100" preserveAspectRatio="none" aria-hidden="true">
+    <defs>
+      <linearGradient id="hillBack" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#A8D98A"/>
+        <stop offset="100%" stop-color="#8FCA6E"/>
+      </linearGradient>
+      <linearGradient id="hillFront" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#8BD06A"/>
+        <stop offset="100%" stop-color="#6FB54F"/>
+      </linearGradient>
+    </defs>
+    <path d="M0 100 L0 52 C70 18,150 42,230 28 C320 12,400 48,490 32 C580 16,670 46,760 30 C850 14,940 44,1030 28 C1100 16,1160 40,1200 34 L1200 100 Z" fill="url(#hillBack)"/>
+    <path d="M0 100 L0 68 C90 42,170 62,260 52 C360 40,450 66,550 54 C650 42,740 64,840 52 C940 40,1060 62,1200 56 L1200 100 Z" fill="url(#hillFront)"/>
+  </svg>
+  <!-- Fence segments along grass top edge (bottom buried slightly into grass) -->
+  <div class="sky-fence" aria-hidden="true">
+    <svg viewBox="0 0 80 40" preserveAspectRatio="xMidYMax meet">
+      <rect x="4" y="8" width="6" height="30" rx="2" fill="#C48A4A" stroke="#4A3426" stroke-width="2"/>
+      <rect x="24" y="8" width="6" height="30" rx="2" fill="#C48A4A" stroke="#4A3426" stroke-width="2"/>
+      <rect x="44" y="8" width="6" height="30" rx="2" fill="#C48A4A" stroke="#4A3426" stroke-width="2"/>
+      <rect x="64" y="8" width="6" height="30" rx="2" fill="#C48A4A" stroke="#4A3426" stroke-width="2"/>
+      <rect x="2" y="14" width="70" height="5" rx="2" fill="#D4A574" stroke="#4A3426" stroke-width="2"/>
+      <rect x="2" y="26" width="70" height="5" rx="2" fill="#D4A574" stroke="#4A3426" stroke-width="2"/>
+    </svg>
+    <svg viewBox="0 0 80 40" preserveAspectRatio="xMidYMax meet">
+      <rect x="4" y="8" width="6" height="30" rx="2" fill="#C48A4A" stroke="#4A3426" stroke-width="2"/>
+      <rect x="24" y="8" width="6" height="30" rx="2" fill="#C48A4A" stroke="#4A3426" stroke-width="2"/>
+      <rect x="44" y="8" width="6" height="30" rx="2" fill="#C48A4A" stroke="#4A3426" stroke-width="2"/>
+      <rect x="64" y="8" width="6" height="30" rx="2" fill="#C48A4A" stroke="#4A3426" stroke-width="2"/>
+      <rect x="2" y="14" width="70" height="5" rx="2" fill="#D4A574" stroke="#4A3426" stroke-width="2"/>
+      <rect x="2" y="26" width="70" height="5" rx="2" fill="#D4A574" stroke="#4A3426" stroke-width="2"/>
+    </svg>
+    <svg viewBox="0 0 80 40" preserveAspectRatio="xMidYMax meet">
+      <rect x="4" y="8" width="6" height="30" rx="2" fill="#C48A4A" stroke="#4A3426" stroke-width="2"/>
+      <rect x="24" y="8" width="6" height="30" rx="2" fill="#C48A4A" stroke="#4A3426" stroke-width="2"/>
+      <rect x="44" y="8" width="6" height="30" rx="2" fill="#C48A4A" stroke="#4A3426" stroke-width="2"/>
+      <rect x="64" y="8" width="6" height="30" rx="2" fill="#C48A4A" stroke="#4A3426" stroke-width="2"/>
+      <rect x="2" y="14" width="70" height="5" rx="2" fill="#D4A574" stroke="#4A3426" stroke-width="2"/>
+      <rect x="2" y="26" width="70" height="5" rx="2" fill="#D4A574" stroke="#4A3426" stroke-width="2"/>
+    </svg>
+    <svg viewBox="0 0 80 40" preserveAspectRatio="xMidYMax meet">
+      <rect x="4" y="8" width="6" height="30" rx="2" fill="#C48A4A" stroke="#4A3426" stroke-width="2"/>
+      <rect x="24" y="8" width="6" height="30" rx="2" fill="#C48A4A" stroke="#4A3426" stroke-width="2"/>
+      <rect x="44" y="8" width="6" height="30" rx="2" fill="#C48A4A" stroke="#4A3426" stroke-width="2"/>
+      <rect x="64" y="8" width="6" height="30" rx="2" fill="#C48A4A" stroke="#4A3426" stroke-width="2"/>
+      <rect x="2" y="14" width="70" height="5" rx="2" fill="#D4A574" stroke="#4A3426" stroke-width="2"/>
+      <rect x="2" y="26" width="70" height="5" rx="2" fill="#D4A574" stroke="#4A3426" stroke-width="2"/>
+    </svg>
+    <svg viewBox="0 0 80 40" preserveAspectRatio="xMidYMax meet">
+      <rect x="4" y="8" width="6" height="30" rx="2" fill="#C48A4A" stroke="#4A3426" stroke-width="2"/>
+      <rect x="24" y="8" width="6" height="30" rx="2" fill="#C48A4A" stroke="#4A3426" stroke-width="2"/>
+      <rect x="44" y="8" width="6" height="30" rx="2" fill="#C48A4A" stroke="#4A3426" stroke-width="2"/>
+      <rect x="64" y="8" width="6" height="30" rx="2" fill="#C48A4A" stroke="#4A3426" stroke-width="2"/>
+      <rect x="2" y="14" width="70" height="5" rx="2" fill="#D4A574" stroke="#4A3426" stroke-width="2"/>
+      <rect x="2" y="26" width="70" height="5" rx="2" fill="#D4A574" stroke="#4A3426" stroke-width="2"/>
+    </svg>
+  </div>
+  <div class="hud">
+    <div class="topbar">
+      <div class="stat score">分数 <span class="score-num" id="scoreEl">0</span></div>
+      <div class="stat combo"><span id="comboEl">连击 0</span><span class="mult-badge" id="multBadge">×1.5</span></div>
+      <div class="stat timer" id="timerEl">60</div>
+      <button id="pauseBtn" title="暂停">❚❚</button>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div></div>
+  </div>
+  <div class="field" id="field">
+    <div class="decor" id="decor" aria-hidden="true">
+      <!-- sparse tufts in upper 1/3 of grass -->
+      <svg class="tuft" style="left:4%;top:31%;width:34px;height:26px" viewBox="0 0 40 30">
+        <path d="M10 28 Q8 12 14 6 Q12 16 16 28" fill="#66BB6A" stroke="#4A3426" stroke-width="2"/>
+        <path d="M20 28 Q18 8 22 3 Q20 14 24 28" fill="#4CAF50" stroke="#4A3426" stroke-width="2"/>
+        <path d="M28 28 Q30 14 33 8 Q31 18 32 28" fill="#66BB6A" stroke="#4A3426" stroke-width="2"/>
+      </svg>
+      <svg class="tuft" style="left:22%;top:34%;width:28px;height:22px" viewBox="0 0 40 30">
+        <path d="M14 28 Q12 14 18 8 Q16 18 20 28" fill="#4CAF50" stroke="#4A3426" stroke-width="2"/>
+        <path d="M24 28 Q26 12 30 7 Q28 16 28 28" fill="#66BB6A" stroke="#4A3426" stroke-width="2"/>
+      </svg>
+      <svg class="tuft" style="left:48%;top:30%;width:32px;height:24px" viewBox="0 0 40 30">
+        <path d="M10 28 Q8 14 14 8 Q12 18 16 28" fill="#66BB6A" stroke="#4A3426" stroke-width="2"/>
+        <path d="M20 28 Q22 10 26 5 Q24 16 24 28" fill="#4CAF50" stroke="#4A3426" stroke-width="2"/>
+      </svg>
+      <svg class="tuft" style="right:18%;top:33%;width:30px;height:24px" viewBox="0 0 40 30">
+        <path d="M12 28 Q10 14 15 7 Q13 18 17 28" fill="#4CAF50" stroke="#4A3426" stroke-width="2"/>
+        <path d="M22 28 Q24 10 28 5 Q26 16 26 28" fill="#66BB6A" stroke="#4A3426" stroke-width="2"/>
+      </svg>
+      <svg class="tuft" style="right:3%;top:32%;width:36px;height:28px" viewBox="0 0 40 30">
+        <path d="M8 28 Q6 10 12 4 Q10 14 14 28" fill="#4CAF50" stroke="#4A3426" stroke-width="2"/>
+        <path d="M18 28 Q16 6 20 2 Q18 12 22 28" fill="#66BB6A" stroke="#4A3426" stroke-width="2"/>
+        <path d="M26 28 Q28 12 32 6 Q30 16 30 28" fill="#4CAF50" stroke="#4A3426" stroke-width="2"/>
+      </svg>
+      <svg class="tuft" style="left:70%;top:37%;width:26px;height:20px" viewBox="0 0 40 30">
+        <path d="M14 28 Q12 14 18 8 Q16 18 20 28" fill="#66BB6A" stroke="#4A3426" stroke-width="2"/>
+        <path d="M24 28 Q26 12 28 8 Q26 16 28 28" fill="#4CAF50" stroke="#4A3426" stroke-width="2"/>
+      </svg>
+      <svg class="tuft" style="left:12%;top:36%;width:24px;height:20px" viewBox="0 0 40 30">
+        <path d="M16 28 Q14 14 18 8 Q16 18 20 28" fill="#4CAF50" stroke="#4A3426" stroke-width="2"/>
+        <path d="M24 28 Q26 12 30 8 Q28 16 28 28" fill="#66BB6A" stroke="#4A3426" stroke-width="2"/>
+      </svg>
+      <svg class="tuft" style="right:8%;top:35%;width:22px;height:18px" viewBox="0 0 28 28">
+        <circle cx="14" cy="12" r="3.5" fill="#F6C443" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="9" cy="10" r="3" fill="#FF8A3D" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="19" cy="10" r="3" fill="#FF8A3D" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="10" cy="15" r="3" fill="#FF8A3D" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="18" cy="15" r="3" fill="#FF8A3D" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="14" cy="12" r="2" fill="#fff"/>
+        <rect x="12.5" y="17" width="3" height="8" rx="1.5" fill="#4CAF50" stroke="#4A3426" stroke-width="1"/>
+      </svg>
+      <!-- grass clumps around holes (sides/corners, not over holes) -->
+      <svg class="tuft" style="left:2%;bottom:6%;width:48px;height:36px" viewBox="0 0 40 30">
+        <path d="M8 28 Q6 10 12 4 Q10 14 14 28" fill="#4CAF50" stroke="#4A3426" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M18 28 Q16 6 20 2 Q18 12 22 28" fill="#66BB6A" stroke="#4A3426" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M26 28 Q28 12 32 6 Q30 16 30 28" fill="#4CAF50" stroke="#4A3426" stroke-width="2" stroke-linejoin="round"/>
+      </svg>
+      <svg class="tuft" style="right:3%;bottom:8%;width:44px;height:34px" viewBox="0 0 40 30">
+        <path d="M10 28 Q8 12 14 6 Q12 16 16 28" fill="#66BB6A" stroke="#4A3426" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M20 28 Q22 8 26 4 Q24 14 24 28" fill="#4CAF50" stroke="#4A3426" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M28 28 Q30 14 34 8 Q32 18 32 28" fill="#66BB6A" stroke="#4A3426" stroke-width="2" stroke-linejoin="round"/>
+      </svg>
+      <svg class="tuft" style="left:3%;bottom:28%;width:38px;height:30px" viewBox="0 0 40 30">
+        <path d="M12 28 Q10 14 16 8 Q14 18 18 28" fill="#4CAF50" stroke="#4A3426" stroke-width="2"/>
+        <path d="M22 28 Q24 12 28 6 Q26 16 26 28" fill="#66BB6A" stroke="#4A3426" stroke-width="2"/>
+      </svg>
+      <svg class="tuft" style="right:4%;bottom:30%;width:40px;height:30px" viewBox="0 0 40 30">
+        <path d="M10 28 Q8 12 14 5 Q12 16 16 28" fill="#66BB6A" stroke="#4A3426" stroke-width="2"/>
+        <path d="M20 28 Q22 8 24 4 Q22 14 24 28" fill="#4CAF50" stroke="#4A3426" stroke-width="2"/>
+        <path d="M28 28 Q30 14 34 8 Q32 18 32 28" fill="#66BB6A" stroke="#4A3426" stroke-width="2"/>
+      </svg>
+      <svg class="tuft" style="left:1%;top:38%;width:36px;height:28px" viewBox="0 0 40 30">
+        <path d="M10 28 Q8 12 14 6 Q12 16 16 28" fill="#66BB6A" stroke="#4A3426" stroke-width="2"/>
+        <path d="M20 28 Q18 8 22 3 Q20 14 24 28" fill="#4CAF50" stroke="#4A3426" stroke-width="2"/>
+        <path d="M28 28 Q30 14 33 8 Q31 18 32 28" fill="#66BB6A" stroke="#4A3426" stroke-width="2"/>
+      </svg>
+      <svg class="tuft" style="right:2%;top:42%;width:34px;height:26px" viewBox="0 0 40 30">
+        <path d="M12 28 Q10 14 15 7 Q13 18 17 28" fill="#4CAF50" stroke="#4A3426" stroke-width="2"/>
+        <path d="M22 28 Q24 10 28 5 Q26 16 26 28" fill="#66BB6A" stroke="#4A3426" stroke-width="2"/>
+      </svg>
+      <svg class="tuft" style="left:6%;bottom:48%;width:32px;height:24px" viewBox="0 0 40 30">
+        <path d="M14 28 Q12 14 18 8 Q16 18 20 28" fill="#4CAF50" stroke="#4A3426" stroke-width="2"/>
+        <path d="M24 28 Q26 12 30 7 Q28 16 28 28" fill="#66BB6A" stroke="#4A3426" stroke-width="2"/>
+      </svg>
+      <svg class="tuft" style="right:7%;bottom:50%;width:34px;height:26px" viewBox="0 0 40 30">
+        <path d="M10 28 Q8 14 14 8 Q12 18 16 28" fill="#66BB6A" stroke="#4A3426" stroke-width="2"/>
+        <path d="M20 28 Q22 10 26 5 Q24 16 24 28" fill="#4CAF50" stroke="#4A3426" stroke-width="2"/>
+        <path d="M28 28 Q30 16 34 10 Q32 20 32 28" fill="#66BB6A" stroke="#4A3426" stroke-width="2"/>
+      </svg>
+      <svg class="tuft" style="left:48%;bottom:3%;width:40px;height:30px" viewBox="0 0 40 30">
+        <path d="M8 28 Q6 12 12 6 Q10 16 14 28" fill="#4CAF50" stroke="#4A3426" stroke-width="2"/>
+        <path d="M18 28 Q16 8 20 3 Q18 14 22 28" fill="#66BB6A" stroke="#4A3426" stroke-width="2"/>
+        <path d="M26 28 Q28 14 32 8 Q30 18 30 28" fill="#4CAF50" stroke="#4A3426" stroke-width="2"/>
+      </svg>
+      <!-- flowers -->
+      <svg class="tuft" style="left:5%;bottom:16%;width:28px;height:28px" viewBox="0 0 28 28">
+        <circle cx="14" cy="12" r="4" fill="#FF8A3D" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="8" cy="10" r="3.5" fill="#F08A8A" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="20" cy="10" r="3.5" fill="#F08A8A" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="10" cy="16" r="3.5" fill="#F08A8A" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="18" cy="16" r="3.5" fill="#F08A8A" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="14" cy="12" r="2.2" fill="#F6C443" stroke="#4A3426" stroke-width="1"/>
+        <rect x="12.5" y="18" width="3" height="8" rx="1.5" fill="#4CAF50" stroke="#4A3426" stroke-width="1"/>
+      </svg>
+      <svg class="tuft" style="right:6%;bottom:22%;width:26px;height:26px" viewBox="0 0 28 28">
+        <circle cx="14" cy="12" r="4" fill="#F6C443" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="8" cy="10" r="3.5" fill="#BDE6FF" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="20" cy="10" r="3.5" fill="#BDE6FF" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="10" cy="16" r="3.5" fill="#BDE6FF" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="18" cy="16" r="3.5" fill="#BDE6FF" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="14" cy="12" r="2.2" fill="#FF8A3D" stroke="#4A3426" stroke-width="1"/>
+        <rect x="12.5" y="18" width="3" height="8" rx="1.5" fill="#4CAF50" stroke="#4A3426" stroke-width="1"/>
+      </svg>
+      <svg class="tuft" style="left:88%;bottom:6%;width:24px;height:24px" viewBox="0 0 28 28">
+        <circle cx="14" cy="12" r="3.5" fill="#FF7A59" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="9" cy="10" r="3" fill="#F08A8A" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="19" cy="10" r="3" fill="#F08A8A" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="10" cy="15" r="3" fill="#F08A8A" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="18" cy="15" r="3" fill="#F08A8A" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="14" cy="12" r="2" fill="#F6C443"/>
+        <rect x="12.5" y="17" width="3" height="8" rx="1.5" fill="#4CAF50" stroke="#4A3426" stroke-width="1"/>
+      </svg>
+      <svg class="tuft" style="left:10%;top:48%;width:24px;height:24px" viewBox="0 0 28 28">
+        <circle cx="14" cy="12" r="3.5" fill="#F6C443" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="9" cy="10" r="3" fill="#FF8A3D" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="19" cy="10" r="3" fill="#FF8A3D" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="10" cy="15" r="3" fill="#FF8A3D" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="18" cy="15" r="3" fill="#FF8A3D" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="14" cy="12" r="2" fill="#fff"/>
+        <rect x="12.5" y="17" width="3" height="8" rx="1.5" fill="#4CAF50" stroke="#4A3426" stroke-width="1"/>
+      </svg>
+      <svg class="tuft" style="right:12%;top:52%;width:22px;height:22px" viewBox="0 0 28 28">
+        <circle cx="14" cy="12" r="3.5" fill="#F08A8A" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="9" cy="10" r="3" fill="#FF7A59" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="19" cy="10" r="3" fill="#FF7A59" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="10" cy="15" r="3" fill="#FF7A59" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="18" cy="15" r="3" fill="#FF7A59" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="14" cy="12" r="2" fill="#F6C443"/>
+        <rect x="12.5" y="17" width="3" height="8" rx="1.5" fill="#4CAF50" stroke="#4A3426" stroke-width="1"/>
+      </svg>
+      <svg class="tuft" style="left:20%;bottom:4%;width:22px;height:22px" viewBox="0 0 28 28">
+        <circle cx="14" cy="12" r="3.5" fill="#BDE6FF" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="9" cy="10" r="3" fill="#fff" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="19" cy="10" r="3" fill="#fff" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="10" cy="15" r="3" fill="#fff" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="18" cy="15" r="3" fill="#fff" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="14" cy="12" r="2" fill="#F6C443"/>
+        <rect x="12.5" y="17" width="3" height="8" rx="1.5" fill="#4CAF50" stroke="#4A3426" stroke-width="1"/>
+      </svg>
+      <svg class="tuft" style="right:22%;bottom:5%;width:20px;height:20px" viewBox="0 0 28 28">
+        <circle cx="14" cy="12" r="3.5" fill="#FF8A3D" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="9" cy="10" r="3" fill="#F6C443" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="19" cy="10" r="3" fill="#F6C443" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="10" cy="15" r="3" fill="#F6C443" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="18" cy="15" r="3" fill="#F6C443" stroke="#4A3426" stroke-width="1.5"/>
+        <circle cx="14" cy="12" r="2" fill="#FF7A59"/>
+        <rect x="12.5" y="17" width="3" height="8" rx="1.5" fill="#4CAF50" stroke="#4A3426" stroke-width="1"/>
+      </svg>
+    </div>
+    <div class="grid g3" id="grid"></div>
+  </div>
+  <div class="garden-wrap">
+    <div class="garden-bed" id="carrotsBar"></div>
+  </div>
+  <div id="pauseOverlay">
+    <h2>暂停</h2>
+    <button class="diff-btn" id="resumeBtn" style="justify-content:center">继续游戏</button>
+    <button class="ghost-btn" id="quitBtn">回到首页</button>
+  </div>
+</div>
+
+<!-- OVER -->
+<div id="over" class="screen">
+  <div class="clouds">
+    <div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div>
+  </div>
+  <div class="card">
+    <div class="confetti" id="confetti"></div>
+    <h2>游戏结束</h2>
+    <div class="stars" id="starsEl">★★★</div>
+    <div class="new-record" id="newRecord">🎉 新纪录！</div>
+    <div class="stats-grid">
+      <div class="cell"><div class="label">得分</div><div class="val" id="finalScore">0</div></div>
+      <div class="cell"><div class="label">命中率</div><div class="val" id="finalHitRate">0%</div></div>
+      <div class="cell"><div class="label">最高连击</div><div class="val" id="finalCombo">0</div></div>
+      <div class="cell"><div class="label">难度</div><div class="val" id="finalDiff">普通</div></div>
+    </div>
+    <div class="over-btns">
+      <button class="diff-btn" id="retryBtn" style="justify-content:center">再来一局</button>
+      <button class="ghost-btn" id="homeBtn" style="width:100%">回到首页</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---------- Config ----------
+  var DIFF = {
+    easy:   { label: '简单', cols: 3, stay: 1.4, maxUp: 1, helmet: false, spawnBase: 1.0 },
+    normal: { label: '普通', cols: 3, stay: 1.0, maxUp: 2, helmet: false, spawnBase: 0.85 },
+    hard:   { label: '困难', cols: 4, stay: 0.75, maxUp: 3, helmet: true,  spawnBase: 0.7 }
+  };
+  var GAME_DURATION = 60;
+  var SPEED_INTERVAL = 15;
+  var SPEED_FACTOR = 0.85;
+
+  // ---------- Storage ----------
+  function loadHS() {
+    try { return JSON.parse(localStorage.getItem('cg_hs') || '{}'); } catch (e) { return {}; }
+  }
+  function saveHS(hs) {
+    try { localStorage.setItem('cg_hs', JSON.stringify(hs)); } catch (e) {}
+  }
+  function loadMute() {
+    try { return localStorage.getItem('cg_mute') === '1'; } catch (e) { return false; }
+  }
+  function saveMute(m) {
+    try { localStorage.setItem('cg_mute', m ? '1' : '0'); } catch (e) {}
+  }
+
+  // ---------- Audio (Web Audio) ----------
+  var audioCtx = null;
+  var muted = loadMute();
+
+  function ensureAudio() {
+    if (!audioCtx) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) audioCtx = new AC();
+    }
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  }
+
+  function tone(freq, dur, type, vol, slide) {
+    if (muted || !audioCtx) return;
+    var t = audioCtx.currentTime;
+    var o = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    o.type = type || 'sine';
+    o.frequency.setValueAtTime(freq, t);
+    if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + dur);
+    g.gain.setValueAtTime(vol || 0.15, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(t); o.stop(t + dur + 0.02);
+  }
+
+  function noise(dur, vol) {
+    if (muted || !audioCtx) return;
+    var n = Math.floor(audioCtx.sampleRate * dur);
+    var buf = audioCtx.createBuffer(1, n, audioCtx.sampleRate);
+    var d = buf.getChannelData(0);
+    for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+    var s = audioCtx.createBufferSource();
+    s.buffer = buf;
+    var g = audioCtx.createGain();
+    g.gain.value = vol || 0.08;
+    var f = audioCtx.createBiquadFilter();
+    f.type = 'lowpass'; f.frequency.value = 800;
+    s.connect(f); f.connect(g); g.connect(audioCtx.destination);
+    s.start();
+  }
+
+  var SFX = {
+    hit: function () { noise(0.08, 0.12); tone(120, 0.12, 'triangle', 0.18, 60); },
+    gold: function () { tone(880, 0.08, 'sine', 0.12); tone(1320, 0.15, 'sine', 0.1); },
+    rabbit: function () { tone(180, 0.25, 'sawtooth', 0.1, 90); },
+    combo: function (n) { tone(400 + n * 40, 0.1, 'square', 0.08); },
+    tick: function () { tone(900, 0.04, 'square', 0.06); },
+    end: function () { tone(400, 0.2, 'triangle', 0.12, 200); setTimeout(function () { tone(300, 0.3, 'triangle', 0.1, 150); }, 200); },
+    pop: function () { tone(300, 0.06, 'sine', 0.05, 500); }
+  };
+
+  // ---------- SVG helpers ----------
+  function moleSVG(opts) {
+    opts = opts || {};
+    var body = opts.gold ? '#F6C443' : '#A6703F';
+    var belly = opts.gold ? '#FFE9A0' : '#F2D3A8';
+    var eye = opts.dead
+      ? '<g stroke="#4A3426" stroke-width="2.8" stroke-linecap="round">' +
+        '<line x1="-9" y1="-8" x2="-3" y2="-2"/><line x1="-3" y1="-8" x2="-9" y2="-2"/>' +
+        '<line x1="3" y1="-8" x2="9" y2="-2"/><line x1="9" y1="-8" x2="3" y2="-2"/></g>'
+      : '<circle cx="-6" cy="-5" r="3.5" fill="#4A3426"/><circle cx="6" cy="-5" r="3.5" fill="#4A3426"/>' +
+        '<circle cx="-4.8" cy="-6.2" r="1.2" fill="#fff"/><circle cx="7.2" cy="-6.2" r="1.2" fill="#fff"/>';
+    var flash = opts.gold && !opts.dead
+      ? '<g opacity=".95">' +
+        '<polygon points="24,-30 27,-18 34,-24 30,-12 40,-12 30,-4 36,6 24,0 20,12 16,0 4,6 12,-4 2,-12 14,-12 10,-24 17,-18" fill="#FFF59D" stroke="#F6C443" stroke-width="1.5"/>' +
+        '<polygon points="-28,-22 -24,-14 -30,-12 -22,-8 -24,2 -16,-4 -10,4 -12,-6 -4,-8 -12,-12 -8,-20 -16,-14" fill="#FFFDE7" stroke="#F6C443" stroke-width="1" opacity=".85"/>' +
+        '</g>'
+      : '';
+    var helmet = opts.helmet
+      ? '<g>' +
+        '<ellipse cx="0" cy="-20" rx="24" ry="14" fill="#5B8C3E" stroke="#4A3426" stroke-width="3"/>' +
+        '<path d="M-24 -18 Q0 -36 24 -18" fill="#6B9B4A" stroke="#4A3426" stroke-width="3"/>' +
+        '<rect x="-14" y="-16" width="28" height="7" rx="2" fill="#3E2723" stroke="#4A3426" stroke-width="2.5"/>' +
+        '<circle cx="0" cy="-28" r="4" fill="#7CB342" stroke="#4A3426" stroke-width="2"/>' +
+        '</g>'
+      : '';
+    /* Tight viewBox so head+belly fill the rise area (helmet/flash still fit) */
+    return '<svg viewBox="-40 -38 80 82" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet">' +
+      flash +
+      '<ellipse cx="0" cy="12" rx="27" ry="29" fill="' + body + '" stroke="#4A3426" stroke-width="3"/>' +
+      '<ellipse cx="-20" cy="-6" rx="9" ry="11" fill="' + body + '" stroke="#4A3426" stroke-width="3"/>' +
+      '<ellipse cx="20" cy="-6" rx="9" ry="11" fill="' + body + '" stroke="#4A3426" stroke-width="3"/>' +
+      '<ellipse cx="0" cy="18" rx="15" ry="13" fill="' + belly + '" stroke="#4A3426" stroke-width="2.5"/>' +
+      eye +
+      '<ellipse cx="0" cy="3" rx="6.5" ry="5" fill="#F08A8A" stroke="#4A3426" stroke-width="2"/>' +
+      '<circle cx="-2" cy="2" r="1.3" fill="#fff" opacity=".55"/>' +
+      '<line x1="-20" y1="1" x2="-9" y2="3" stroke="#4A3426" stroke-width="1.6" stroke-linecap="round"/>' +
+      '<line x1="-20" y1="6" x2="-9" y2="6" stroke="#4A3426" stroke-width="1.6" stroke-linecap="round"/>' +
+      '<line x1="-19" y1="11" x2="-9" y2="9" stroke="#4A3426" stroke-width="1.6" stroke-linecap="round"/>' +
+      '<line x1="20" y1="1" x2="9" y2="3" stroke="#4A3426" stroke-width="1.6" stroke-linecap="round"/>' +
+      '<line x1="20" y1="6" x2="9" y2="6" stroke="#4A3426" stroke-width="1.6" stroke-linecap="round"/>' +
+      '<line x1="19" y1="11" x2="9" y2="9" stroke="#4A3426" stroke-width="1.6" stroke-linecap="round"/>' +
+      '<rect x="-4.5" y="8" width="4" height="6" rx="1.2" fill="#fff" stroke="#4A3426" stroke-width="1.4"/>' +
+      '<rect x="0.5" y="8" width="4" height="6" rx="1.2" fill="#fff" stroke="#4A3426" stroke-width="1.4"/>' +
+      helmet +
+      '</svg>';
+  }
+
+  function rabbitSVG(opts) {
+    opts = opts || {};
+    var face = opts.sad
+      ? '<path d="M-7,8 Q0,3 7,8" fill="none" stroke="#4A3426" stroke-width="2.5" stroke-linecap="round"/>' +
+        '<path d="M-11,-1 Q-14,6 -11,12" fill="none" stroke="#7EC8F8" stroke-width="2.8" stroke-linecap="round"/>' +
+        '<path d="M11,-1 Q14,6 11,12" fill="none" stroke="#7EC8F8" stroke-width="2.8" stroke-linecap="round"/>'
+      : '<path d="M-7,5 Q0,12 7,5" fill="none" stroke="#4A3426" stroke-width="2.5" stroke-linecap="round"/>';
+    var eyes = opts.sad
+      ? '<ellipse cx="-7" cy="-2" rx="3.2" ry="3.8" fill="#4A3426"/><ellipse cx="7" cy="-2" rx="3.2" ry="3.8" fill="#4A3426"/>'
+      : '<circle cx="-7" cy="-2" r="3.4" fill="#4A3426"/><circle cx="7" cy="-2" r="3.4" fill="#4A3426"/>' +
+        '<circle cx="-5.8" cy="-3.2" r="1.2" fill="#fff"/><circle cx="8.2" cy="-3.2" r="1.2" fill="#fff"/>';
+    return '<svg viewBox="-40 -52 80 96" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet">' +
+      '<ellipse cx="-12" cy="-34" rx="7" ry="22" fill="#F5E6D3" stroke="#4A3426" stroke-width="3" transform="rotate(-12 -12 -34)"/>' +
+      '<ellipse cx="-12" cy="-34" rx="3.2" ry="15" fill="#F08A8A" opacity=".75" transform="rotate(-12 -12 -34)"/>' +
+      '<ellipse cx="12" cy="-34" rx="7" ry="22" fill="#F5E6D3" stroke="#4A3426" stroke-width="3" transform="rotate(12 12 -34)"/>' +
+      '<ellipse cx="12" cy="-34" rx="3.2" ry="15" fill="#F08A8A" opacity=".75" transform="rotate(12 12 -34)"/>' +
+      '<ellipse cx="0" cy="10" rx="25" ry="27" fill="#F5E6D3" stroke="#4A3426" stroke-width="3"/>' +
+      '<ellipse cx="0" cy="16" rx="13" ry="11" fill="#FFF8EE" stroke="#4A3426" stroke-width="2"/>' +
+      eyes +
+      '<ellipse cx="0" cy="5" rx="4.5" ry="3.5" fill="#F08A8A" stroke="#4A3426" stroke-width="1.5"/>' +
+      '<circle cx="-1.5" cy="4" r="1" fill="#fff" opacity=".5"/>' +
+      face +
+      '</svg>';
+  }
+
+  function carrotSVG() {
+    return '<svg viewBox="0 0 48 64" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M24 2 L16 0 L19 10 L8 4 L18 14 L6 16 L20 18 L12 28 L24 18 L28 30 L32 18 L42 16 L30 14 L40 4 L29 10 L32 0 Z" fill="#4CAF50" stroke="#4A3426" stroke-width="2" stroke-linejoin="round"/>' +
+      '<path d="M15 16 C11 18, 9 28, 12 40 C15 50, 21 60, 24 62 C27 60, 33 50, 36 40 C39 28, 37 18, 33 16 C29 14, 19 14, 15 16 Z" fill="#FF8A3D" stroke="#4A3426" stroke-width="2.5" stroke-linejoin="round"/>' +
+      '<path d="M18 28 L20 40 M24 26 L25 42 M30 30 L28 44" stroke="#E06A20" stroke-width="1.8" stroke-linecap="round"/>' +
+      '</svg>';
+  }
+
+  function hammerSVG() {
+    return '<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">' +
+      '<g transform="rotate(-35 24 24)">' +
+      '<rect x="20" y="4" width="8" height="22" rx="3" fill="#8B5A2B" stroke="#4A3426" stroke-width="2"/>' +
+      '<rect x="14" y="24" width="20" height="14" rx="4" fill="#C48A4A" stroke="#4A3426" stroke-width="2"/>' +
+      '</g></svg>';
+  }
+
+  // ---------- DOM refs ----------
+  var $ = function (id) { return document.getElementById(id); };
+  var menuEl = $('menu'), gameEl = $('game'), overEl = $('over');
+  var gridEl = $('grid'), fieldEl = $('field'), carrotsBar = $('carrotsBar');
+  var scoreEl = $('scoreEl'), comboEl = $('comboEl'), timerEl = $('timerEl');
+  var multBadge = $('multBadge');
+  var progressFill = $('progressFill'), pauseOverlay = $('pauseOverlay');
+  var muteBtn = $('muteBtn');
+
+  // ---------- Game state ----------
+  var G = {
+    state: 'menu',
+    difficulty: 'normal',
+    score: 0,
+    combo: 0,
+    maxCombo: 0,
+    multiplier: 1,
+    timeLeft: GAME_DURATION,
+    carrots: 5,
+    holes: [],
+    hits: 0,
+    attempts: 0,
+    nextSpawnAt: 0,
+    lastTickSec: -1,
+    speedTier: 0,
+    pausedAt: 0,
+    startTime: 0,
+    elapsedPaused: 0,
+    raf: 0,
+    spawnSeq: 0
+  };
+
+  function holeCount() { return DIFF[G.difficulty].cols * DIFF[G.difficulty].cols; }
+
+  function makeHoles() {
+    var n = holeCount();
+    G.holes = [];
+    for (var i = 0; i < n; i++) {
+      G.holes.push({
+        index: i, type: null, up: false, hitCount: 0, hideAt: 0,
+        spawnId: 0, el: null, charEl: null
+      });
+    }
+  }
+
+  function buildGrid() {
+    var cols = DIFF[G.difficulty].cols;
+    gridEl.className = 'grid g' + cols;
+    gridEl.innerHTML = '';
+    for (var i = 0; i < G.holes.length; i++) {
+      (function (idx) {
+        var hole = document.createElement('div');
+        hole.className = 'hole';
+        hole.dataset.idx = idx;
+        var mound = document.createElement('div');
+        mound.className = 'dirt-mound';
+        var back = document.createElement('div');
+        back.className = 'mound-back';
+        var pit = document.createElement('div');
+        pit.className = 'pit';
+        var clip = document.createElement('div');
+        clip.className = 'char-clip';
+        var char = document.createElement('div');
+        char.className = 'char';
+        clip.appendChild(char);
+        var lip = document.createElement('div');
+        lip.className = 'dirt-lip';
+        mound.appendChild(back);
+        mound.appendChild(pit);
+        mound.appendChild(clip);
+        mound.appendChild(lip);
+        hole.appendChild(mound);
+        gridEl.appendChild(hole);
+        G.holes[idx].el = hole;
+        G.holes[idx].charEl = char;
+      })(i);
+    }
+  }
+
+  function buildCarrots() {
+    carrotsBar.innerHTML = '';
+    for (var i = 0; i < 5; i++) {
+      var s = document.createElement('div');
+      s.className = 'carrot-slot' + (i >= G.carrots ? ' gone' : '');
+      s.innerHTML = carrotSVG();
+      carrotsBar.appendChild(s);
+    }
+  }
+
+  function updateCarrotsUI(animateSteal) {
+    var slots = carrotsBar.children;
+    for (var i = 0; i < slots.length; i++) {
+      var shouldGone = i >= G.carrots;
+      var wasGone = slots[i].classList.contains('gone') || slots[i].classList.contains('steal');
+      if (shouldGone && !wasGone && animateSteal) {
+        slots[i].className = 'carrot-slot steal';
+        (function (el) {
+          setTimeout(function () { el.className = 'carrot-slot gone'; }, 450);
+        })(slots[i]);
+      } else if (shouldGone) {
+        slots[i].className = 'carrot-slot gone';
+      } else {
+        slots[i].className = 'carrot-slot';
+      }
+    }
+  }
+
+  function updateHUD() {
+    scoreEl.textContent = G.score;
+    comboEl.textContent = '连击 ' + G.combo;
+    if (G.multiplier > 1) {
+      multBadge.textContent = '×' + G.multiplier;
+      multBadge.classList.add('show');
+    } else {
+      multBadge.classList.remove('show');
+    }
+    var t = Math.max(0, Math.ceil(G.timeLeft));
+    timerEl.textContent = t;
+    var pct = (G.timeLeft / GAME_DURATION) * 100;
+    progressFill.style.width = Math.max(0, pct) + '%';
+    if (G.timeLeft <= 10) {
+      timerEl.classList.add('urgent');
+      progressFill.classList.add('urgent');
+    } else {
+      timerEl.classList.remove('urgent');
+      progressFill.classList.remove('urgent');
+    }
+  }
+
+  function getMultiplier(combo) {
+    if (combo >= 20) return 3;
+    if (combo >= 10) return 2;
+    if (combo >= 5) return 1.5;
+    return 1;
+  }
+
+  function pickType() {
+    var r = Math.random();
+    if (r < 0.10) return 'rabbit';
+    if (r < 0.18) return 'gold';
+    if (DIFF[G.difficulty].helmet && r < 0.30) return 'helmet';
+    return 'normal';
+  }
+
+  function countUp() {
+    var c = 0;
+    for (var i = 0; i < G.holes.length; i++) if (G.holes[i].up) c++;
+    return c;
+  }
+
+  function stayTime() {
+    var base = DIFF[G.difficulty].stay;
+    return base * Math.pow(SPEED_FACTOR, G.speedTier);
+  }
+
+  function spawnInterval() {
+    var base = DIFF[G.difficulty].spawnBase;
+    return base * Math.pow(SPEED_FACTOR, G.speedTier);
+  }
+
+  function showChar(h) {
+    var svg;
+    if (h.type === 'rabbit') svg = rabbitSVG({ sad: false });
+    else if (h.type === 'gold') svg = moleSVG({ gold: true });
+    else if (h.type === 'helmet') svg = moleSVG({ helmet: true });
+    else svg = moleSVG();
+    h.charEl.innerHTML = svg;
+    h.charEl.className = 'char';
+    void h.charEl.offsetWidth;
+    h.charEl.classList.add('up');
+    SFX.pop();
+  }
+
+  function hideChar(h, escaped) {
+    if (!h.up) return;
+    var sid = h.spawnId;
+    h.up = false;
+    h.charEl.classList.remove('up', 'hit');
+    if (escaped) {
+      if (h.type === 'gold') {
+        G.carrots = Math.max(0, G.carrots - 1);
+        updateCarrotsUI(true);
+        if (G.carrots <= 0) {
+          endGame();
+          return;
+        }
+      }
+      if (h.type !== 'rabbit') {
+        G.combo = 0;
+        G.multiplier = 1;
+        updateHUD();
+      }
+    }
+    h.type = null;
+    h.hitCount = 0;
+    setTimeout(function () {
+      if (h.spawnId !== sid) return;
+      if (!h.up) h.charEl.innerHTML = '';
+    }, 220);
+  }
+
+  function spawnOne(now) {
+    var maxUp = DIFF[G.difficulty].maxUp;
+    if (countUp() >= maxUp) return;
+    var empty = [];
+    for (var i = 0; i < G.holes.length; i++) if (!G.holes[i].up) empty.push(i);
+    if (!empty.length) return;
+    var idx = empty[Math.floor(Math.random() * empty.length)];
+    var h = G.holes[idx];
+    h.spawnId = ++G.spawnSeq;
+    h.type = pickType();
+    h.up = true;
+    h.hitCount = 0;
+    h.hideAt = now + stayTime() * (h.type === 'gold' ? 0.65 : 1) * 1000;
+    showChar(h);
+  }
+
+  function floatText(holeEl, text, neg) {
+    var f = document.createElement('div');
+    f.className = 'float-score' + (neg ? ' neg' : '');
+    f.textContent = text;
+    holeEl.appendChild(f);
+    setTimeout(function () { if (f.parentNode) f.parentNode.removeChild(f); }, 700);
+  }
+
+  function sparks(holeEl) {
+    for (var i = 0; i < 4; i++) {
+      var s = document.createElement('div');
+      s.className = 'spark';
+      s.textContent = '✦';
+      var ang = (Math.PI * 2 * i) / 4 + Math.random() * 0.5;
+      s.style.setProperty('--dx', Math.cos(ang) * 30 + 'px');
+      s.style.setProperty('--dy', Math.sin(ang) * 30 - 20 + 'px');
+      s.style.left = '40%';
+      s.style.top = '30%';
+      s.style.color = ['#F6C443', '#FF7A59', '#fff', '#FFE082'][i];
+      holeEl.appendChild(s);
+      (function (el) { setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 500); })(s);
+    }
+  }
+
+  function showHammerFx(x, y) {
+    var fx = document.createElement('div');
+    fx.className = 'hammer-fx';
+    fx.innerHTML = hammerSVG();
+    fx.style.left = (x - 28) + 'px';
+    fx.style.top = (y - 28) + 'px';
+    fieldEl.appendChild(fx);
+    setTimeout(function () { if (fx.parentNode) fx.parentNode.removeChild(fx); }, 300);
+  }
+
+  function swingCursor() {
+    fieldEl.classList.add('swing');
+    setTimeout(function () { fieldEl.classList.remove('swing'); }, 150);
+  }
+
+  function doHit(index) {
+    if (G.state !== 'playing') return false;
+    var h = G.holes[index];
+    if (!h || !h.up) {
+      G.combo = 0;
+      G.multiplier = 1;
+      G.attempts++;
+      updateHUD();
+      return false;
+    }
+
+    G.attempts++;
+
+    if (h.type === 'rabbit') {
+      var rabbitSid = h.spawnId;
+      G.score = Math.max(0, G.score - 15);
+      G.combo = 0;
+      G.multiplier = 1;
+      h.charEl.innerHTML = rabbitSVG({ sad: true });
+      floatText(h.el, '-15', true);
+      SFX.rabbit();
+      h.up = false;
+      h.hideAt = 0;
+      setTimeout(function () {
+        if (h.spawnId !== rabbitSid) return;
+        h.charEl.classList.remove('up');
+        h.type = null;
+        setTimeout(function () {
+          if (h.spawnId !== rabbitSid) return;
+          h.charEl.innerHTML = '';
+        }, 200);
+      }, 400);
+      updateHUD();
+      return true;
+    }
+
+    if (h.type === 'helmet' && h.hitCount < 1) {
+      h.hitCount = 1;
+      h.charEl.innerHTML = moleSVG({ helmet: false });
+      SFX.hit();
+      sparks(h.el);
+      floatText(h.el, '!');
+      updateHUD();
+      return true;
+    }
+
+    // Successful hit
+    var pts = 10;
+    if (h.type === 'gold') pts = 30;
+    else if (h.type === 'helmet') pts = 20;
+
+    G.combo++;
+    if (G.combo > G.maxCombo) G.maxCombo = G.combo;
+    G.multiplier = getMultiplier(G.combo);
+    var gained = Math.round(pts * G.multiplier);
+    G.score += gained;
+    G.hits++;
+
+    var hitSid = h.spawnId;
+    h.charEl.classList.add('hit');
+    if (h.type === 'gold') {
+      h.charEl.innerHTML = moleSVG({ gold: true, dead: true });
+      SFX.gold();
+    } else {
+      h.charEl.innerHTML = moleSVG({ dead: true });
+      SFX.hit();
+    }
+    if (G.combo === 5 || G.combo === 10 || G.combo === 20) SFX.combo(G.combo);
+
+    floatText(h.el, '+' + gained);
+    sparks(h.el);
+
+    h.up = false;
+    h.hideAt = 0;
+    h.type = null;
+    h.hitCount = 0;
+    setTimeout(function () {
+      if (h.spawnId !== hitSid) return;
+      h.charEl.classList.remove('up', 'hit');
+      setTimeout(function () {
+        if (h.spawnId !== hitSid) return;
+        h.charEl.innerHTML = '';
+      }, 200);
+    }, 180);
+
+    updateHUD();
+    return true;
+  }
+
+  // ---------- Loop ----------
+  function nowMs() { return performance.now(); }
+
+  function gameTime() {
+    return (nowMs() - G.startTime - G.elapsedPaused) / 1000;
+  }
+
+  function loop() {
+    if (G.state !== 'playing') return;
+    var elapsed = gameTime();
+    G.timeLeft = GAME_DURATION - elapsed;
+
+    var tier = Math.min(3, Math.floor(elapsed / SPEED_INTERVAL));
+    G.speedTier = tier;
+
+    if (G.timeLeft <= 10) {
+      var sec = Math.ceil(G.timeLeft);
+      if (sec !== G.lastTickSec && sec > 0) {
+        G.lastTickSec = sec;
+        SFX.tick();
+      }
+    }
+
+    updateHUD();
+
+    var t = nowMs();
+    for (var i = 0; i < G.holes.length; i++) {
+      var h = G.holes[i];
+      if (h.up && h.hideAt && t >= h.hideAt) {
+        hideChar(h, true);
+      }
+    }
+
+    if (t >= G.nextSpawnAt) {
+      spawnOne(t);
+      G.nextSpawnAt = t + spawnInterval() * 1000 * (0.7 + Math.random() * 0.6);
+    }
+
+    if (G.timeLeft <= 0 || G.carrots <= 0) {
+      endGame();
+      return;
+    }
+
+    G.raf = requestAnimationFrame(loop);
+  }
+
+  // ---------- State transitions ----------
+  function showScreen(name) {
+    menuEl.classList.toggle('active', name === 'menu');
+    gameEl.classList.toggle('active', name === 'game' || name === 'paused');
+    overEl.classList.toggle('active', name === 'over');
+  }
+
+  function startGame(diff) {
+    ensureAudio();
+    G.difficulty = diff || G.difficulty || 'normal';
+    G.state = 'playing';
+    G.score = 0;
+    G.combo = 0;
+    G.maxCombo = 0;
+    G.multiplier = 1;
+    G.timeLeft = GAME_DURATION;
+    G.carrots = 5;
+    G.hits = 0;
+    G.attempts = 0;
+    G.speedTier = 0;
+    G.lastTickSec = -1;
+    G.elapsedPaused = 0;
+    G.startTime = nowMs();
+    G.nextSpawnAt = nowMs() + 600;
+    G.spawnSeq = 0;
+    pauseOverlay.classList.remove('show');
+
+    makeHoles();
+    buildGrid();
+    buildCarrots();
+    updateHUD();
+    showScreen('game');
+    if (G.raf) cancelAnimationFrame(G.raf);
+    G.raf = requestAnimationFrame(loop);
+  }
+
+  function pauseGame() {
+    if (G.state !== 'playing') return;
+    G.state = 'paused';
+    G.pausedAt = nowMs();
+    if (G.raf) cancelAnimationFrame(G.raf);
+    pauseOverlay.classList.add('show');
+  }
+
+  function resumeGame() {
+    if (G.state !== 'paused') return;
+    G.elapsedPaused += nowMs() - G.pausedAt;
+    G.state = 'playing';
+    pauseOverlay.classList.remove('show');
+    G.raf = requestAnimationFrame(loop);
+  }
+
+  function starRating(score, diff) {
+    var thresholds = {
+      easy:   [80, 200],
+      normal: [150, 350],
+      hard:   [200, 450]
+    };
+    var th = thresholds[diff] || thresholds.normal;
+    if (score >= th[1]) return 3;
+    if (score >= th[0]) return 2;
+    return 1;
+  }
+
+  function endGame() {
+    if (G.state === 'over') return;
+    G.state = 'over';
+    G.timeLeft = Math.max(0, G.timeLeft);
+    if (G.raf) cancelAnimationFrame(G.raf);
+    for (var i = 0; i < G.holes.length; i++) {
+      G.holes[i].up = false;
+      G.holes[i].type = null;
+    }
+    SFX.end();
+
+    var hs = loadHS();
+    var prev = hs[G.difficulty] || 0;
+    var isNew = G.score > prev;
+    if (isNew) {
+      hs[G.difficulty] = G.score;
+      saveHS(hs);
+    }
+
+    var stars = starRating(G.score, G.difficulty);
+    var starStr = '';
+    for (var s = 0; s < 3; s++) starStr += s < stars ? '★' : '☆';
+    $('starsEl').textContent = starStr;
+    $('finalScore').textContent = G.score;
+    var rate = G.attempts > 0 ? Math.round((G.hits / G.attempts) * 100) : 0;
+    $('finalHitRate').textContent = rate + '%';
+    $('finalCombo').textContent = G.maxCombo;
+    $('finalDiff').textContent = DIFF[G.difficulty].label;
+
+    var nr = $('newRecord');
+    var conf = $('confetti');
+    conf.innerHTML = '';
+    if (isNew) {
+      nr.classList.add('show');
+      var colors = ['#FF7A59', '#F6C443', '#8BD06A', '#BDE6FF', '#F08A8A'];
+      for (var c = 0; c < 28; c++) {
+        var bit = document.createElement('i');
+        bit.style.left = Math.random() * 100 + '%';
+        bit.style.background = colors[c % colors.length];
+        bit.style.animationDuration = (1.2 + Math.random() * 1.5) + 's';
+        bit.style.animationDelay = (Math.random() * 0.5) + 's';
+        conf.appendChild(bit);
+      }
+    } else {
+      nr.classList.remove('show');
+    }
+
+    updateHSDisplay();
+    showScreen('over');
+  }
+
+  function goMenu() {
+    G.state = 'menu';
+    if (G.raf) cancelAnimationFrame(G.raf);
+    pauseOverlay.classList.remove('show');
+    showScreen('menu');
+    updateHSDisplay();
+  }
+
+  function updateHSDisplay() {
+    var hs = loadHS();
+    $('hs-easy').textContent = '最高 ' + (hs.easy || 0);
+    $('hs-normal').textContent = '最高 ' + (hs.normal || 0);
+    $('hs-hard').textContent = '最高 ' + (hs.hard || 0);
+  }
+
+  function updateMuteBtn() {
+    muteBtn.textContent = muted ? '🔇' : '🔊';
+  }
+
+  // ---------- Events ----------
+  document.querySelectorAll('.diff-btn[data-diff]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      ensureAudio();
+      startGame(btn.getAttribute('data-diff'));
+    });
+  });
+
+  muteBtn.addEventListener('click', function () {
+    muted = !muted;
+    saveMute(muted);
+    updateMuteBtn();
+    ensureAudio();
+  });
+
+  $('pauseBtn').addEventListener('click', function () {
+    if (G.state === 'playing') pauseGame();
+  });
+  $('resumeBtn').addEventListener('click', resumeGame);
+  $('quitBtn').addEventListener('click', goMenu);
+  $('retryBtn').addEventListener('click', function () { startGame(G.difficulty); });
+  $('homeBtn').addEventListener('click', goMenu);
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && G.state === 'playing') pauseGame();
+  });
+
+  fieldEl.addEventListener('pointerdown', function (e) {
+    if (G.state !== 'playing') return;
+    ensureAudio();
+    swingCursor();
+    var rect = fieldEl.getBoundingClientRect();
+    showHammerFx(e.clientX - rect.left, e.clientY - rect.top);
+
+    var target = e.target.closest('.hole');
+    if (target) {
+      var idx = parseInt(target.dataset.idx, 10);
+      doHit(idx);
+    } else {
+      G.combo = 0;
+      G.multiplier = 1;
+      updateHUD();
+    }
+  });
+
+  // ---------- Mascot ----------
+  $('mascotSvg').innerHTML = moleSVG();
+
+  // ---------- Debug API ----------
+  window.__game = {
+    get state() { return G.state; },
+    get score() { return G.score; },
+    get combo() { return G.combo; },
+    get timeLeft() { return G.timeLeft; },
+    get carrots() { return G.carrots; },
+    get difficulty() { return G.difficulty; },
+    get holes() {
+      return G.holes.map(function (h) {
+        return { up: h.up, type: h.type, hitCount: h.hitCount };
+      });
+    },
+    start: function (difficulty) { startGame(difficulty || 'normal'); },
+    hit: function (index) { return doHit(index); },
+    pause: pauseGame,
+    resume: resumeGame
+  };
+
+  // ---------- Init ----------
+  updateHSDisplay();
+  updateMuteBtn();
+})();
+</script>
+</body>
+</html>

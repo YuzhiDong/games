@@ -1,0 +1,2900 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>小动物数独 — Daisy 的动物拼布床</title>
+  <style>
+:root {
+  --bg-oat: #F6EFE3;
+  --ink: #2B3A55;
+  --moss: #6A9C5B;
+  --moss-dark: #4E7A40;
+  --berry: #9B6BB3;
+  --pumpkin: #F29544;
+  --lake: #5FB3C9;
+  --cream: #FFE7A3;
+  --cherry: #F6B5C0;
+  --wood-paper: #EADCC8;
+  --wood-grain: #DECBB1;
+  --accent: #F29544;
+  --size: 4;
+
+  --box-0: #FCE3E7;
+  --box-1: #DDF0F4;
+  --box-2: #E8F1DC;
+  --box-3: #FFF3CF;
+  --box-4: #EFE4F7;
+  --box-5: #FDE8D0;
+
+  --font-main: "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+  background-color: var(--bg-oat);
+  background-image:
+    radial-gradient(rgba(43, 58, 85, 0.045) 1px, transparent 0),
+    radial-gradient(rgba(242, 149, 68, 0.05) 1.5px, transparent 0),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(246, 239, 227, 0) 45%);
+  background-size: 18px 18px, 32px 32px, 100% 100%;
+  background-position: 0 0, 9px 9px, 0 0;
+  color: var(--ink);
+  font-family: var(--font-main);
+  -webkit-font-smoothing: antialiased;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* Decorative Scenery */
+.scenery-top {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 110px;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.bunting-svg {
+  width: 100%;
+  max-width: 680px;
+  height: 44px;
+  display: block;
+  margin: 0 auto;
+  filter: drop-shadow(0 3px 0 rgba(43, 58, 85, 0.16));
+}
+
+.sky-cutouts {
+  position: fixed;
+  top: 10px;
+  right: 12px;
+  width: 84px;
+  height: 76px;
+  pointer-events: none;
+  z-index: 0;
+  filter: drop-shadow(3px 3px 0 var(--ink));
+}
+
+.scenery-hills {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 86px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.scenery-hills svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Screen Containers */
+.app-shell {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.screen {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Paper Cutout Card / Button Base */
+.paper-btn {
+  appearance: none;
+  border: 2.5px solid var(--ink);
+  border-radius: 18px;
+  background: #FFFDF9;
+  color: var(--ink);
+  font-family: var(--font-main);
+  font-weight: 800;
+  box-shadow: 0 4px 0 var(--ink);
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.paper-btn:hover {
+  background-color: #FFF9EB;
+}
+
+.paper-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--ink);
+}
+
+.paper-btn:focus-visible,
+.theme-btn:focus-visible,
+.level-btn:focus-visible,
+.pal-btn:focus-visible,
+.cell:focus-visible {
+  outline: 3.5px dashed var(--pumpkin);
+  outline-offset: 3px;
+}
+
+/* ==================== HOME SCREEN ==================== */
+#screen-home {
+  padding: 28px 16px 36px;
+  justify-content: flex-start;
+  gap: 20px;
+}
+
+.home-header {
+  text-align: center;
+  margin-top: 6px;
+  position: relative;
+}
+
+.home-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--cream);
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  padding: 3px 14px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  box-shadow: 2px 3px 0 var(--ink);
+  margin-bottom: 6px;
+  transform: rotate(-1.5deg);
+}
+
+.home-title {
+  margin: 0;
+  font-size: clamp(2.1rem, 7vw, 3rem);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: #FFFDF8;
+  -webkit-text-stroke: 2px var(--ink);
+  text-shadow:
+    0 2px 0 var(--ink),
+    2px 0 0 var(--ink),
+    -2px 0 0 var(--ink),
+    0 -2px 0 var(--ink),
+    3px 4px 0 var(--ink);
+  line-height: 1.15;
+}
+
+.home-section {
+  width: 100%;
+  max-width: 560px;
+}
+
+.section-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin: 0 0 10px 4px;
+  color: var(--ink);
+}
+
+.section-label-stitch {
+  flex: 1;
+  height: 0;
+  border-bottom: 2px dashed rgba(43, 58, 85, 0.3);
+}
+
+/* Theme Swatch Selector */
+.theme-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.theme-btn {
+  appearance: none;
+  border: 2.5px solid var(--ink);
+  border-radius: 18px;
+  background: #FFFDF8;
+  box-shadow: 3px 4px 0 var(--ink);
+  padding: 10px 6px 8px;
+  min-height: 92px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-family: var(--font-main);
+  color: var(--ink);
+  position: relative;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.15s ease;
+}
+
+.theme-btn::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 1.5px dashed rgba(43, 58, 85, 0.22);
+  border-radius: 13px;
+  pointer-events: none;
+}
+
+.theme-btn:active {
+  transform: translate(2px, 3px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+.theme-btn.is-selected {
+  background: var(--cream);
+  border-width: 3px;
+  transform: translateY(-2px);
+  box-shadow: 4px 6px 0 var(--ink);
+}
+
+.theme-btn.is-selected::before {
+  border-color: var(--ink);
+  border-width: 2px;
+}
+
+.theme-btn-top {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 900;
+  font-size: 1rem;
+}
+
+.theme-btn-emoji {
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.theme-btn-animals {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  padding: 3px 7px;
+  font-size: 1.05rem;
+  line-height: 1.1;
+}
+
+/* Level Pillow Buttons */
+.level-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.level-btn {
+  appearance: none;
+  min-height: 108px;
+  min-width: 88px;
+  border: 3px solid var(--ink);
+  border-radius: 22px;
+  background: #FFFDF8;
+  box-shadow: 4px 5px 0 var(--ink);
+  padding: 12px 10px 10px;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-family: var(--font-main);
+  color: var(--ink);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+/* Pillow inner stitch & corner ears */
+.level-btn::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 2px dashed rgba(43, 58, 85, 0.28);
+  border-radius: 16px;
+  pointer-events: none;
+}
+
+.level-btn[data-level="0"] {
+  background-color: #E8F1DC;
+}
+.level-btn[data-level="1"] {
+  background-color: #DDF0F4;
+}
+.level-btn[data-level="2"] {
+  background-color: #FCE3E7;
+}
+.level-btn[data-level="3"] {
+  background-color: #FFF3CF;
+}
+
+.level-btn:active:not(.is-locked) {
+  transform: translate(2px, 3px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.level-btn.is-locked {
+  background-color: #E6DFD3;
+  color: rgba(43, 58, 85, 0.65);
+  cursor: not-allowed;
+}
+
+.level-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.level-emoji {
+  font-size: 2rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 0 rgba(43, 58, 85, 0.18));
+}
+
+.level-name-text {
+  font-size: 1.28rem;
+  font-weight: 900;
+}
+
+.level-size-tag {
+  font-size: 0.78rem;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+
+.level-lock-badge {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.level-stars {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.star {
+  font-size: 1.25rem;
+  line-height: 1;
+  display: inline-block;
+  color: rgba(43, 58, 85, 0.22);
+  filter: grayscale(1) opacity(0.38);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease;
+}
+
+.star.is-on {
+  color: #FFB800;
+  filter: none;
+  transform: scale(1.08);
+  text-shadow: 0 2px 0 var(--ink);
+}
+
+/* ==================== GAME SCREEN ==================== */
+#screen-game {
+  padding: 6px 8px 8px;
+  justify-content: flex-start;
+  gap: 6px;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.game-topbar {
+  width: min(100vw - 16px, 560px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 64px;
+  z-index: 2;
+}
+
+.top-btn {
+  min-width: 64px;
+  min-height: 64px;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  font-size: 1.75rem;
+  background: #FFFDF8;
+  border: 2.5px solid var(--ink);
+  box-shadow: 3px 4px 0 var(--ink);
+  flex-shrink: 0;
+}
+
+#btn-hint {
+  background: var(--cream);
+}
+
+#btn-sound[aria-pressed="false"] {
+  background: #E6DFD3;
+  opacity: 0.85;
+}
+
+.level-pill {
+  flex: 1;
+  min-height: 54px;
+  background: #FFFDF8;
+  border: 2.5px solid var(--ink);
+  border-radius: 18px;
+  box-shadow: 3px 4px 0 var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 1.22rem;
+  font-weight: 900;
+  position: relative;
+}
+
+.level-pill::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1.5px dashed rgba(43, 58, 85, 0.25);
+  border-radius: 13px;
+  pointer-events: none;
+}
+
+/* Stage: Bed + Palette */
+.game-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+
+/* Quilt Bed Wrapper */
+.quilt-bed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+/* Cutout Headboard & Pillow above the Quilt */
+.bed-headboard {
+  width: calc(min(100vw - 16px, 560px) * 0.84);
+  height: 28px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      #D99B66 0px,
+      #D99B66 22px,
+      #C58550 22px,
+      #C58550 25px
+    );
+  border: 3px solid var(--ink);
+  border-bottom: none;
+  border-radius: 22px 22px 0 0;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 14px;
+  box-shadow: 4px 0 0 var(--ink);
+  z-index: 1;
+}
+
+.bed-pillow {
+  width: 36%;
+  height: 18px;
+  background: #FFFDF8;
+  border: 2.5px solid var(--ink);
+  border-bottom: none;
+  border-radius: 14px 14px 0 0;
+  position: relative;
+  top: 2px;
+  background-image: radial-gradient(var(--cherry) 1.5px, transparent 1.5px);
+  background-size: 10px 10px;
+}
+
+.bed-pillow::after {
+  content: "";
+  position: absolute;
+  inset: 3px 5px 0 5px;
+  border-top: 1.5px dashed rgba(43, 58, 85, 0.35);
+  border-radius: 10px 10px 0 0;
+}
+
+/* Board = The Patchwork Quilt */
+#board {
+  --board-w: min(100vw - 16px, 560px);
+  width: var(--board-w);
+  height: var(--board-w);
+  display: grid;
+  grid-template-columns: repeat(var(--size), 1fr);
+  grid-template-rows: repeat(var(--size), 1fr);
+  gap: 0;
+  background-color: var(--accent);
+  border: 3px solid var(--ink);
+  border-radius: 24px;
+  box-shadow: 6px 6px 0 var(--ink);
+  position: relative;
+  overflow: hidden;
+  z-index: 2;
+}
+
+/* White dashed outer quilt stitch */
+#board::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 2px dashed rgba(255, 255, 255, 0.85);
+  border-radius: 19px;
+  pointer-events: none;
+  z-index: 6;
+}
+
+/* Individual Quilt Cell */
+.cell {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-right: 1.5px dashed rgba(43, 58, 85, 0.32);
+  border-bottom: 1.5px dashed rgba(43, 58, 85, 0.32);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background-color: var(--box-0);
+  transition: background-color 0.15s ease, transform 0.12s ease;
+  font-family: var(--font-main);
+}
+
+/* Remove outer right/bottom borders so frame border is clean */
+.cell.is-last-col {
+  border-right: none;
+}
+.cell.is-last-row {
+  border-bottom: none;
+}
+
+/* Bold stitch dividers between boxes (regions) */
+.cell.is-box-right {
+  border-right: 3px dashed var(--ink);
+}
+.cell.is-box-bottom {
+  border-bottom: 3px dashed var(--ink);
+}
+
+/* Fabric patterns for each box index */
+.cell[data-box="0"] {
+  background-color: var(--box-0);
+  background-image: radial-gradient(rgba(214, 110, 128, 0.22) 2px, transparent 2px);
+  background-size: 14px 14px;
+}
+
+.cell[data-box="1"] {
+  background-color: var(--box-1);
+  background-image:
+    linear-gradient(90deg, rgba(95, 179, 201, 0.14) 50%, transparent 50%),
+    linear-gradient(rgba(95, 179, 201, 0.14) 50%, transparent 50%);
+  background-size: 14px 14px;
+}
+
+.cell[data-box="2"] {
+  background-color: var(--box-2);
+  background-image: radial-gradient(rgba(106, 156, 91, 0.22) 1.8px, transparent 1.8px);
+  background-size: 12px 12px;
+}
+
+.cell[data-box="3"] {
+  background-color: var(--box-3);
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(242, 149, 68, 0.1) 0px,
+    rgba(242, 149, 68, 0.1) 4px,
+    transparent 4px,
+    transparent 10px
+  );
+}
+
+.cell[data-box="4"] {
+  background-color: var(--box-4);
+  background-image: radial-gradient(rgba(155, 107, 179, 0.2) 2px, transparent 2px);
+  background-size: 14px 14px;
+}
+
+.cell[data-box="5"] {
+  background-color: var(--box-5);
+  background-image:
+    linear-gradient(90deg, rgba(242, 149, 68, 0.14) 50%, transparent 50%),
+    linear-gradient(rgba(242, 149, 68, 0.14) 50%, transparent 50%);
+  background-size: 14px 14px;
+}
+
+/* Given Cell: Thick craft paper / wood patch + red thumbtack pin */
+.cell.is-given::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  background-color: var(--wood-paper);
+  background-image: repeating-linear-gradient(
+    -12deg,
+    rgba(166, 128, 89, 0.12) 0px,
+    rgba(166, 128, 89, 0.12) 3px,
+    transparent 3px,
+    transparent 9px
+  );
+  border: 2px solid var(--ink);
+  border-radius: 14px;
+  box-shadow: 2px 2px 0 rgba(43, 58, 85, 0.35);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Thumbtack pin on given cell */
+.cell.is-given::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #FF8A7A, #D9483B 70%);
+  border: 1.5px solid var(--ink);
+  box-shadow: 0 1.5px 0 rgba(43, 58, 85, 0.45);
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* Selected Empty Cell */
+.cell.is-selected {
+  background-color: #FFFDF2 !important;
+  box-shadow: inset 0 0 0 4px var(--accent), inset 0 0 0 7px #FFFDF8;
+  z-index: 4;
+}
+
+.cell.is-selected::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 2.5px dashed var(--ink);
+  border-radius: 14px;
+  pointer-events: none;
+  animation: pulse-select 1.2s ease-in-out infinite;
+}
+
+/* Animal Emoji Inside Cell */
+.cell .animal {
+  position: relative;
+  z-index: 2;
+  font-size: calc((var(--board-w) / var(--size)) * 0.62);
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 2px 0 rgba(43, 58, 85, 0.22));
+  pointer-events: none;
+}
+
+.cell.is-given .animal {
+  font-size: calc((var(--board-w) / var(--size)) * 0.52);
+  transform: translateY(3px);
+}
+
+/* Placed Animal Bounce */
+.cell.is-filled .animal {
+  animation: pop-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Ghost animal during gentle mistake */
+.cell.is-mistake-ghost .animal {
+  opacity: 0.48;
+  transform: scale(0.88);
+}
+
+/* Shake on mistake (approx 450ms) */
+.cell.is-shake,
+.level-btn.is-shake {
+  animation: gentle-shake 0.44s ease-in-out;
+}
+
+/* Hint glow once */
+.cell.is-hinted {
+  animation: hint-glow 0.9s ease-out;
+}
+
+.cell.is-hinted .animal {
+  animation: pop-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Row/Col/Box Golden Shimmer on completion */
+.cell.is-line-flash {
+  animation: golden-flash 0.75s ease-out;
+}
+
+/* Gentle Speech Bubble Toast */
+.speech-toast {
+  min-height: 28px;
+  padding: 3px 14px;
+  border-radius: 999px;
+  background: #FFFDF8;
+  border: 2px solid var(--ink);
+  box-shadow: 2px 3px 0 var(--ink);
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* ==================== ANIMAL PALETTE TRAY ==================== */
+#palette {
+  width: min(100vw - 16px, 560px);
+  display: grid;
+  grid-template-columns: repeat(var(--size), 1fr);
+  gap: 6px;
+  padding: 6px;
+  background: #EADCC8;
+  border: 3px solid var(--ink);
+  border-radius: 22px;
+  box-shadow: 4px 5px 0 var(--ink);
+  transition: opacity 0.2s ease, filter 0.2s ease, transform 0.2s ease;
+  position: relative;
+  z-index: 2;
+}
+
+#palette.is-idle {
+  opacity: 0.5;
+  filter: saturate(0.65);
+}
+
+.pal-btn {
+  appearance: none;
+  min-height: 88px;
+  min-width: 88px;
+  border: 2.5px solid var(--ink);
+  border-radius: 18px;
+  background: #FFFDF8;
+  box-shadow: 0 4px 0 var(--ink);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 2px;
+  font-family: var(--font-main);
+  color: var(--ink);
+  position: relative;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease;
+}
+
+#palette[data-size="6"] {
+  gap: 4px;
+  padding: 5px;
+}
+
+#palette[data-size="6"] .pal-btn {
+  min-width: 52px;
+  min-height: 76px;
+  border-radius: 14px;
+}
+
+.pal-btn::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1.5px dashed rgba(43, 58, 85, 0.2);
+  border-radius: 13px;
+  pointer-events: none;
+}
+
+.pal-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--ink);
+}
+
+#palette.is-idle .pal-btn {
+  cursor: default;
+}
+
+#palette.is-idle .pal-btn:active {
+  transform: none;
+  box-shadow: 0 4px 0 var(--ink);
+}
+
+.pal-emoji {
+  font-size: 2.35rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 0 rgba(43, 58, 85, 0.18));
+}
+
+#palette[data-size="6"] .pal-emoji {
+  font-size: 1.85rem;
+}
+
+.pal-name {
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+/* ==================== WIN OVERLAY ==================== */
+#win-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(43, 58, 85, 0.58);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.confetti-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: -24px;
+  width: 14px;
+  height: 18px;
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  animation: confetti-fall 2.6s ease-in forwards;
+}
+
+.win-card {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 400px;
+  background: var(--bg-oat);
+  border: 3.5px solid var(--ink);
+  border-radius: 28px;
+  box-shadow: 6px 8px 0 var(--ink);
+  padding: 24px 18px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.win-card::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 2px dashed rgba(43, 58, 85, 0.3);
+  border-radius: 21px;
+  pointer-events: none;
+}
+
+.win-title {
+  margin: 0;
+  font-size: 1.9rem;
+  font-weight: 900;
+  color: var(--ink);
+}
+
+#win-stars {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 4px 0;
+}
+
+#win-stars .star {
+  font-size: 3.1rem;
+}
+
+#win-stars .star.is-on {
+  animation: star-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+#win-stars .star.is-on:nth-child(1) {
+  animation-delay: 0.08s;
+}
+#win-stars .star.is-on:nth-child(2) {
+  animation-delay: 0.24s;
+}
+#win-stars .star.is-on:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.win-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.win-btn {
+  min-width: 96px;
+  min-height: 88px;
+  flex: 1;
+  padding: 10px 12px;
+  font-size: 1.08rem;
+  font-weight: 900;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.win-btn-icon {
+  font-size: 1.65rem;
+  line-height: 1;
+}
+
+#btn-next {
+  background: var(--cream);
+  flex-basis: 100%;
+}
+
+#btn-again {
+  background: #DDF0F4;
+}
+
+#btn-win-home {
+  background: #FCE3E7;
+}
+
+/* ==================== COMPACT HEIGHT (375x812 single screen) ==================== */
+@media (max-height: 830px) and (max-width: 899px) {
+  #screen-game {
+    padding: 4px 8px 6px;
+    gap: 5px;
+  }
+
+  .bed-headboard {
+    height: 22px;
+  }
+
+  .bed-pillow {
+    height: 14px;
+  }
+
+  .speech-toast {
+    min-height: 24px;
+    font-size: 0.86rem;
+    padding: 2px 12px;
+  }
+}
+
+/* ==================== DESKTOP / WIDE LAYOUT (>= 900px) ==================== */
+@media (min-width: 900px) {
+  #screen-game {
+    padding: 18px 24px;
+    gap: 14px;
+  }
+
+  .game-topbar {
+    width: 720px;
+  }
+
+  .game-stage {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+  }
+
+  #board {
+    --board-w: 500px;
+  }
+
+  .bed-headboard {
+    width: 420px;
+  }
+
+  #palette {
+    width: 180px;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  #palette[data-size="6"] {
+    grid-template-columns: repeat(2, 1fr);
+    width: 210px;
+    gap: 8px;
+  }
+
+  .pal-btn {
+    min-height: 88px;
+    min-width: 88px;
+  }
+}
+
+/* ==================== ANIMATIONS ==================== */
+@keyframes pop-in {
+  0% {
+    transform: scale(0);
+  }
+  65% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes gentle-shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px) rotate(-2deg);
+  }
+  40% {
+    transform: translateX(6px) rotate(2deg);
+  }
+  60% {
+    transform: translateX(-4px) rotate(-1deg);
+  }
+  80% {
+    transform: translateX(4px) rotate(1deg);
+  }
+}
+
+@keyframes hint-glow {
+  0% {
+    box-shadow: inset 0 0 0 0 var(--cream), 0 0 0 0 var(--pumpkin);
+    background-color: #FFF6C2;
+  }
+  40% {
+    box-shadow: inset 0 0 0 6px var(--pumpkin), 0 0 18px 4px rgba(242, 149, 68, 0.7);
+    background-color: #FFFDF0;
+  }
+  100% {
+    box-shadow: inset 0 0 0 0 transparent;
+  }
+}
+
+@keyframes golden-flash {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  45% {
+    filter: brightness(1.16) saturate(1.25);
+    box-shadow: inset 0 0 0 4px #FFB800;
+  }
+}
+
+@keyframes pulse-select {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+}
+
+@keyframes star-pop {
+  0% {
+    transform: scale(0) rotate(-20deg);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.25) rotate(8deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.08) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(92vh) rotate(520deg);
+    opacity: 0.15;
+  }
+}
+
+/* ==================== REDUCED MOTION ==================== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  .confetti-layer {
+    display: none !important;
+  }
+
+  .cell.is-shake,
+  .level-btn.is-shake {
+    background-color: #FAD4D8 !important;
+  }
+
+  .cell.is-hinted {
+    background-color: var(--cream) !important;
+  }
+}
+
+/* ==== QA fixes (integration) ==== */
+.theme-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.theme-btn { min-width: 0; }
+@media (max-width: 480px) {
+  .theme-btn-animals { gap: 1px; padding: 2px 4px; font-size: 0.9rem; }
+  .theme-btn-top { font-size: 0.92rem; }
+  #palette:not([data-size="6"]) {
+    width: calc(100vw - 8px);
+    gap: 4px; padding: 0;
+    background: transparent; border: 0; box-shadow: none;
+  }
+}
+@media (min-width: 900px) {
+  .pal-emoji { font-size: 3.4rem; }
+  #palette:not([data-size="6"]) .pal-btn { min-height: 104px; }
+  .pal-name { font-size: 0.9rem; }
+}
+
+  </style>
+</head>
+<body>
+  <!-- 顶部剪纸三角彩旗 -->
+  <div class="scenery-top" aria-hidden="true">
+    <svg class="bunting-svg" viewBox="0 0 680 48" preserveAspectRatio="none">
+      <path d="M0,4 Q170,18 340,6 T680,8" fill="none" stroke="#2B3A55" stroke-width="2.5" />
+      <polygon points="28,7 56,9 42,38" fill="#F29544" stroke="#2B3A55" stroke-width="2.5" stroke-linejoin="round" />
+      <polygon points="96,10 124,12 110,41" fill="#5FB3C9" stroke="#2B3A55" stroke-width="2.5" stroke-linejoin="round" />
+      <polygon points="164,12 192,12 178,42" fill="#F6B5C0" stroke="#2B3A55" stroke-width="2.5" stroke-linejoin="round" />
+      <polygon points="232,11 260,10 246,40" fill="#FFE7A3" stroke="#2B3A55" stroke-width="2.5" stroke-linejoin="round" />
+      <polygon points="300,8 328,7 314,37" fill="#6A9C5B" stroke="#2B3A55" stroke-width="2.5" stroke-linejoin="round" />
+      <polygon points="368,6 396,6 382,36" fill="#9B6BB3" stroke="#2B3A55" stroke-width="2.5" stroke-linejoin="round" />
+      <polygon points="436,6 464,7 450,37" fill="#F29544" stroke="#2B3A55" stroke-width="2.5" stroke-linejoin="round" />
+      <polygon points="504,7 532,9 518,39" fill="#5FB3C9" stroke="#2B3A55" stroke-width="2.5" stroke-linejoin="round" />
+      <polygon points="572,9 600,10 586,40" fill="#F6B5C0" stroke="#2B3A55" stroke-width="2.5" stroke-linejoin="round" />
+      <polygon points="628,9 656,8 642,38" fill="#FFE7A3" stroke="#2B3A55" stroke-width="2.5" stroke-linejoin="round" />
+    </svg>
+  </div>
+
+  <!-- 右上角剪纸月亮与星星 -->
+  <svg class="sky-cutouts" viewBox="0 0 90 80" aria-hidden="true">
+    <path d="M58,12 A24,24 0 1,0 78,48 A19,19 0 1,1 58,12 Z" fill="#FFE7A3" stroke="#2B3A55" stroke-width="2.5" stroke-linejoin="round" />
+    <polygon points="22,14 25,21 33,22 27,27 29,35 22,31 15,35 17,27 11,22 19,21" fill="#F29544" stroke="#2B3A55" stroke-width="2" stroke-linejoin="round" />
+    <circle cx="42" cy="56" r="4.5" fill="#F6B5C0" stroke="#2B3A55" stroke-width="2" />
+  </svg>
+
+  <!-- 底部剪纸草地与小山层叠 -->
+  <div class="scenery-hills" aria-hidden="true">
+    <svg viewBox="0 0 1200 100" preserveAspectRatio="none">
+      <path d="M0,100 L0,52 Q210,10 450,48 T920,38 T1200,50 L1200,100 Z" fill="#6A9C5B" stroke="#2B3A55" stroke-width="3" />
+      <path d="M0,100 L0,68 Q320,32 640,66 T1200,58 L1200,100 Z" fill="#4E7A40" stroke="#2B3A55" stroke-width="3" />
+    </svg>
+  </div>
+
+  <main class="app-shell">
+    <!-- 首页 -->
+    <section id="screen-home" class="screen is-active">
+      <header class="home-header">
+        <div class="home-badge">☀️ <span>Daisy 的动物拼布床</span> 🌙</div>
+        <h1 class="home-title">小动物数独</h1>
+      </header>
+
+      <div class="home-section">
+        <h2 class="section-label">
+          <span>🎨 选一块小花布</span>
+          <span class="section-label-stitch"></span>
+        </h2>
+        <div id="theme-list" class="theme-list" role="group" aria-label="动物主题选择"></div>
+      </div>
+
+      <div class="home-section">
+        <h2 class="section-label">
+          <span>🛏️ 选一床小被子</span>
+          <span class="section-label-stitch"></span>
+        </h2>
+        <div id="level-list" class="level-grid" role="group" aria-label="关卡选择"></div>
+      </div>
+    </section>
+
+    <!-- 游戏页 -->
+    <section id="screen-game" class="screen" hidden>
+      <header class="game-topbar">
+        <button id="btn-home" type="button" class="paper-btn top-btn" aria-label="回首页" title="回首页">🏠</button>
+        <div id="level-name" class="level-pill" aria-live="polite">🌱 小苗</div>
+        <button id="btn-hint" type="button" class="paper-btn top-btn" aria-label="提示" title="提示">💡</button>
+        <button id="btn-sound" type="button" class="paper-btn top-btn" aria-pressed="true" aria-label="声音开关" title="声音开关">🔊</button>
+      </header>
+
+      <div class="game-stage">
+        <div class="quilt-bed">
+          <div class="bed-headboard" aria-hidden="true">
+            <div class="bed-pillow"></div>
+            <div class="bed-pillow"></div>
+          </div>
+          <div id="board" role="grid" aria-label="动物拼布棋盘"></div>
+        </div>
+
+        <div id="palette" class="is-idle" role="toolbar" aria-label="小动物托盘"></div>
+      </div>
+
+      <div id="speech-toast" class="speech-toast" aria-live="polite">点一格空床位，抱小动物上床睡觉吧</div>
+    </section>
+  </main>
+
+  <!-- 胜利层 -->
+  <div id="win-overlay" role="dialog" aria-modal="true" aria-labelledby="win-praise-text" hidden>
+    <div id="confetti-layer" class="confetti-layer" aria-hidden="true"></div>
+    <div class="win-card">
+      <h2 id="win-praise-text" class="win-title">太棒了！</h2>
+      <div id="win-stars" aria-label="获得星级">
+        <span class="star">⭐</span>
+        <span class="star">⭐</span>
+        <span class="star">⭐</span>
+      </div>
+      <div class="win-actions">
+        <button id="btn-next" type="button" class="paper-btn win-btn">
+          <span class="win-btn-icon">⏭️</span>
+          <span class="win-btn-label">下一关</span>
+        </button>
+        <button id="btn-again" type="button" class="paper-btn win-btn">
+          <span class="win-btn-icon">🔄</span>
+          <span class="win-btn-label">再玩一次</span>
+        </button>
+        <button id="btn-win-home" type="button" class="paper-btn win-btn">
+          <span class="win-btn-icon">🏠</span>
+          <span class="win-btn-label">回首页</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+(function (root) {
+  'use strict';
+
+  var DATA = {
+    levels: [
+      { id: 'easy', name: '小苗', emoji: '🌱', size: 4, difficulty: 'easy' },
+      { id: 'medium', name: '小树', emoji: '🌳', size: 4, difficulty: 'medium' },
+      { id: 'hard', name: '大树', emoji: '🌲', size: 4, difficulty: 'hard' },
+      { id: 'challenge', name: '挑战', emoji: '🏆', size: 6, difficulty: 'medium' }
+    ],
+
+    themes: [
+      {
+        id: 'farm',
+        name: '农场',
+        emoji: '🚜',
+        color: '#F29544',
+        animals: [
+          { emoji: '🐮', name: '奶牛', say: '哞哞，奶牛来啦' },
+          { emoji: '🐷', name: '小猪', say: '哼哼，小猪粉粉的' },
+          { emoji: '🐔', name: '母鸡', say: '咯咯，母鸡下蛋啦' },
+          { emoji: '🐑', name: '小羊', say: '咩咩，小羊毛茸茸' },
+          { emoji: '🐴', name: '小马', say: '哒哒，小马跑得快' },
+          { emoji: '🐶', name: '小狗', say: '汪汪，小狗看家呢' }
+        ]
+      },
+      {
+        id: 'forest',
+        name: '森林',
+        emoji: '🍄',
+        color: '#6A9C5B',
+        animals: [
+          { emoji: '🦊', name: '狐狸', say: '森林里，小狐狸红红的' },
+          { emoji: '🐻', name: '小熊', say: '小熊胖乎乎，爱吃蜂蜜' },
+          { emoji: '🐰', name: '兔子', say: '蹦蹦跳跳的小兔子' },
+          { emoji: '🐯', name: '老虎', say: '吼呜，老虎花衣裳' },
+          { emoji: '🐸', name: '青蛙', say: '呱呱，青蛙会跳高' },
+          { emoji: '🦉', name: '猫头鹰', say: '咕咕，猫头鹰好聪明' }
+        ]
+      },
+      {
+        id: 'ocean',
+        name: '海洋',
+        emoji: '🌊',
+        color: '#5FB3C9',
+        animals: [
+          { emoji: '🐳', name: '鲸鱼', say: '鲸鱼喷水，好大呀' },
+          { emoji: '🐙', name: '章鱼', say: '章鱼八只小脚呀' },
+          { emoji: '🦀', name: '螃蟹', say: '螃蟹横着走，钳子大' },
+          { emoji: '🐢', name: '海龟', say: '海龟慢慢爬，背着房子' },
+          { emoji: '🐬', name: '海豚', say: '海豚聪明会顶球' },
+          { emoji: '🐠', name: '热带鱼', say: '热带鱼穿着花衣裳' }
+        ]
+      }
+    ],
+
+    praise: [
+      '太棒了！',
+      '你真厉害！',
+      '好棒好棒！',
+      '你真聪明！',
+      '全部对啦！',
+      '小动物都睡好啦！',
+      '完成得真好！',
+      '你赢啦，真好！',
+      '小天才！',
+      '真了不起呀！'
+    ],
+
+    gentle: [
+      '再想想哦',
+      '换一个试试',
+      '这个位置再看看',
+      '慢慢来呀',
+      '别急，再试试看',
+      '没关系，再来',
+      '再动动小脑筋'
+    ],
+
+    hintSay: [
+      '看这里哦',
+      '我帮你放好啦',
+      '这个位置要放它',
+      '悄悄告诉你哦',
+      '跟着线索找一找'
+    ]
+  };
+
+  root.SUDOKU_DATA = DATA;
+  if (typeof module !== 'undefined' && module.exports) module.exports = DATA;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+  </script>
+  <script>
+/* Sudoku core for Daisy — pure functions, ES2017, no dependencies. */
+(function (root) {
+  var GIVENS = {
+    4: { easy: 10, medium: 8, hard: 6 },
+    6: { easy: 24, medium: 20, hard: 16 }
+  };
+
+  var PROGRESS_KEY = 'daisy-sudoku-v1';
+
+  function makeRng(seed) {
+    var a = seed >>> 0;
+    return function () {
+      a = (a + 0x6D2B79F5) >>> 0;
+      var t = Math.imul(a ^ (a >>> 15), a | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function boxShape(size) {
+    if (size === 4) return [2, 2];
+    if (size === 6) return [2, 3];
+    throw new Error('unsupported size');
+  }
+
+  function isInt(n) {
+    return typeof n === 'number' && n === (n | 0) && isFinite(n);
+  }
+
+  function shuffle(arr, rng) {
+    var i, j, tmp;
+    for (i = arr.length - 1; i > 0; i--) {
+      j = (rng() * (i + 1)) | 0;
+      tmp = arr[i];
+      arr[i] = arr[j];
+      arr[j] = tmp;
+    }
+    return arr;
+  }
+
+  function isValidPlacement(grid, size, idx, val) {
+    var n, r, c, i, ri, ci, br, bc, r0, c0, rr, cc, bi, shape;
+    if (!isInt(val) || val < 1 || val > size) return false;
+    n = size * size;
+    if (!isInt(idx) || idx < 0 || idx >= n) return false;
+    r = (idx / size) | 0;
+    c = idx - r * size;
+    for (i = 0; i < size; i++) {
+      ri = r * size + i;
+      if (ri !== idx && grid[ri] === val) return false;
+      ci = i * size + c;
+      if (ci !== idx && grid[ci] === val) return false;
+    }
+    shape = boxShape(size);
+    br = shape[0];
+    bc = shape[1];
+    r0 = r - (r % br);
+    c0 = c - (c % bc);
+    for (rr = r0; rr < r0 + br; rr++) {
+      for (cc = c0; cc < c0 + bc; cc++) {
+        bi = rr * size + cc;
+        if (bi !== idx && grid[bi] === val) return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Shared exact-cover style search.
+   * onSol(gridCopy) is called for each solution, at most `limit` times.
+   * Returns the number found, or -1 if the givens contradict.
+   */
+  function search(grid, size, limit, onSol) {
+    var shape = boxShape(size);
+    var br = shape[0];
+    var bc = shape[1];
+    var boxCols = (size / bc) | 0;
+    var n = size * size;
+    var g = grid.slice();
+    var rowOf = new Array(n);
+    var colOf = new Array(n);
+    var boxOf = new Array(n);
+    var rowM = new Array(size);
+    var colM = new Array(size);
+    var boxM = new Array(size);
+    var ALL = (1 << (size + 1)) - 2;
+    var i, v, r, c, b, bit, found;
+
+    for (i = 0; i < size; i++) {
+      rowM[i] = 0;
+      colM[i] = 0;
+      boxM[i] = 0;
+    }
+    for (i = 0; i < n; i++) {
+      r = (i / size) | 0;
+      c = i - r * size;
+      b = ((r / br) | 0) * boxCols + ((c / bc) | 0);
+      rowOf[i] = r;
+      colOf[i] = c;
+      boxOf[i] = b;
+      v = g[i] | 0;
+      if (v === 0) continue;
+      if (v < 1 || v > size) return -1;
+      bit = 1 << v;
+      if ((rowM[r] & bit) || (colM[c] & bit) || (boxM[b] & bit)) return -1;
+      rowM[r] |= bit;
+      colM[c] |= bit;
+      boxM[b] |= bit;
+    }
+
+    found = 0;
+    function bt() {
+      var bestI, bestMask, bestC, i2, mask, cnt, m, val, bit2, r2, c2, b2;
+      if (found >= limit) return;
+      bestI = -1;
+      bestMask = 0;
+      bestC = size + 1;
+      for (i2 = 0; i2 < n; i2++) {
+        if (g[i2] !== 0) continue;
+        mask = ALL & ~(rowM[rowOf[i2]] | colM[colOf[i2]] | boxM[boxOf[i2]]);
+        cnt = 0;
+        m = mask;
+        while (m) {
+          m &= m - 1;
+          cnt++;
+        }
+        if (cnt === 0) return;
+        if (cnt < bestC) {
+          bestC = cnt;
+          bestI = i2;
+          bestMask = mask;
+        }
+      }
+      if (bestI === -1) {
+        found++;
+        if (onSol) onSol(g.slice());
+        return;
+      }
+      r2 = rowOf[bestI];
+      c2 = colOf[bestI];
+      b2 = boxOf[bestI];
+      for (val = 1; val <= size; val++) {
+        bit2 = 1 << val;
+        if ((bestMask & bit2) === 0) continue;
+        g[bestI] = val;
+        rowM[r2] |= bit2;
+        colM[c2] |= bit2;
+        boxM[b2] |= bit2;
+        bt();
+        g[bestI] = 0;
+        rowM[r2] ^= bit2;
+        colM[c2] ^= bit2;
+        boxM[b2] ^= bit2;
+        if (found >= limit) return;
+      }
+    }
+    bt();
+    return found;
+  }
+
+  function solve(grid, size) {
+    var out = null;
+    var n = search(grid, size, 1, function (g) { out = g; });
+    if (n < 0) return null;
+    return out;
+  }
+
+  function countSolutions(grid, size, limit) {
+    var n;
+    if (limit === undefined) limit = 2;
+    if (limit <= 0) return 0;
+    n = search(grid, size, limit, null);
+    if (n < 0) return 0;
+    return n;
+  }
+
+  function randomSolution(size, rng) {
+    var shape = boxShape(size);
+    var br = shape[0];
+    var bc = shape[1];
+    var boxCols = (size / bc) | 0;
+    var n = size * size;
+    var g = new Array(n);
+    var rowOf = new Array(n);
+    var colOf = new Array(n);
+    var boxOf = new Array(n);
+    var rowM = new Array(size);
+    var colM = new Array(size);
+    var boxM = new Array(size);
+    var ALL = (1 << (size + 1)) - 2;
+    var i, r, c, b;
+
+    for (i = 0; i < n; i++) g[i] = 0;
+    for (i = 0; i < size; i++) {
+      rowM[i] = 0;
+      colM[i] = 0;
+      boxM[i] = 0;
+    }
+    for (i = 0; i < n; i++) {
+      r = (i / size) | 0;
+      c = i - r * size;
+      b = ((r / br) | 0) * boxCols + ((c / bc) | 0);
+      rowOf[i] = r;
+      colOf[i] = c;
+      boxOf[i] = b;
+    }
+
+    function bt() {
+      var bestI = -1;
+      var bestMask = 0;
+      var bestC = size + 1;
+      var i2, mask, cnt, m, order, k, val, bit, r2, c2, b2;
+      for (i2 = 0; i2 < n; i2++) {
+        if (g[i2] !== 0) continue;
+        mask = ALL & ~(rowM[rowOf[i2]] | colM[colOf[i2]] | boxM[boxOf[i2]]);
+        cnt = 0;
+        m = mask;
+        while (m) {
+          m &= m - 1;
+          cnt++;
+        }
+        if (cnt === 0) return false;
+        if (cnt < bestC) {
+          bestC = cnt;
+          bestI = i2;
+          bestMask = mask;
+        }
+      }
+      if (bestI === -1) return true;
+      order = [];
+      for (val = 1; val <= size; val++) {
+        if (bestMask & (1 << val)) order.push(val);
+      }
+      shuffle(order, rng);
+      r2 = rowOf[bestI];
+      c2 = colOf[bestI];
+      b2 = boxOf[bestI];
+      for (k = 0; k < order.length; k++) {
+        val = order[k];
+        bit = 1 << val;
+        g[bestI] = val;
+        rowM[r2] |= bit;
+        colM[c2] |= bit;
+        boxM[b2] |= bit;
+        if (bt()) return true;
+        g[bestI] = 0;
+        rowM[r2] ^= bit;
+        colM[c2] ^= bit;
+        boxM[b2] ^= bit;
+      }
+      return false;
+    }
+
+    if (!bt()) throw new Error('failed to build a full solution');
+    return g;
+  }
+
+  function givenCount(puzzle) {
+    var n = 0;
+    var i;
+    for (i = 0; i < puzzle.length; i++) if (puzzle[i] !== 0) n++;
+    return n;
+  }
+
+  function generate(size, difficulty, rng) {
+    var target = GIVENS[size][difficulty];
+    var n = size * size;
+    var best = null;
+    var bestGivens = n + 1;
+    var attempt, solution, puzzle, order, i, idx, saved, given;
+
+    for (attempt = 0; attempt < 60; attempt++) {
+      solution = randomSolution(size, rng);
+      puzzle = solution.slice();
+      order = new Array(n);
+      for (i = 0; i < n; i++) order[i] = i;
+      shuffle(order, rng);
+      given = n;
+      for (i = 0; i < n && given > target; i++) {
+        idx = order[i];
+        saved = puzzle[idx];
+        puzzle[idx] = 0;
+        if (countSolutions(puzzle, size, 2) !== 1) {
+          puzzle[idx] = saved;
+        } else {
+          given--;
+        }
+      }
+      if (given < bestGivens) {
+        bestGivens = given;
+        best = {
+          size: size,
+          difficulty: difficulty,
+          puzzle: puzzle.slice(),
+          solution: solution.slice()
+        };
+      }
+      if (given === target) return best;
+    }
+    return best;
+  }
+
+  function createState(gen) {
+    return {
+      size: gen.size,
+      difficulty: gen.difficulty,
+      puzzle: gen.puzzle.slice(),
+      solution: gen.solution.slice(),
+      cells: gen.puzzle.slice(),
+      mistakes: 0,
+      hintsUsed: 0,
+      done: false
+    };
+  }
+
+  function copyState(state, cells, mistakes, hintsUsed, done) {
+    return {
+      size: state.size,
+      difficulty: state.difficulty,
+      puzzle: state.puzzle,
+      solution: state.solution,
+      cells: cells,
+      mistakes: mistakes,
+      hintsUsed: hintsUsed,
+      done: done
+    };
+  }
+
+  function isComplete(state) {
+    var cells = state.cells;
+    var solution = state.solution;
+    var i;
+    for (i = 0; i < solution.length; i++) {
+      if (cells[i] !== solution[i]) return false;
+    }
+    return true;
+  }
+
+  function applyMove(state, idx, val) {
+    var n, cells, next;
+    if (state.done) return { state: state, event: 'ignored' };
+    n = state.size * state.size;
+    if (!isInt(idx) || idx < 0 || idx >= n) return { state: state, event: 'ignored' };
+    if (state.puzzle[idx] !== 0) return { state: state, event: 'ignored' };
+    if (state.cells[idx] !== 0) return { state: state, event: 'ignored' };
+    if (!isInt(val) || val < 1 || val > state.size) return { state: state, event: 'ignored' };
+    if (val !== state.solution[idx]) {
+      return {
+        state: copyState(state, state.cells.slice(), state.mistakes + 1, state.hintsUsed, false),
+        event: 'mistake'
+      };
+    }
+    cells = state.cells.slice();
+    cells[idx] = val;
+    next = copyState(state, cells, state.mistakes, state.hintsUsed, false);
+    if (isComplete(next)) {
+      next.done = true;
+      return { state: next, event: 'win' };
+    }
+    return { state: next, event: 'place' };
+  }
+
+  function candidateCount(cells, size, idx) {
+    var val, n = 0;
+    for (val = 1; val <= size; val++) {
+      if (isValidPlacement(cells, size, idx, val)) n++;
+    }
+    return n;
+  }
+
+  function hint(state) {
+    var n, i, bestI, bestC, c, cells, next;
+    if (state.done) return { state: state, event: 'ignored', idx: -1 };
+    n = state.size * state.size;
+    bestI = -1;
+    bestC = state.size + 1;
+    for (i = 0; i < n; i++) {
+      if (state.cells[i] !== 0) continue;
+      c = candidateCount(state.cells, state.size, i);
+      if (c < bestC) {
+        bestC = c;
+        bestI = i;
+      }
+    }
+    if (bestI < 0) return { state: state, event: 'ignored', idx: -1 };
+    cells = state.cells.slice();
+    cells[bestI] = state.solution[bestI];
+    next = copyState(state, cells, state.mistakes, state.hintsUsed + 1, false);
+    if (isComplete(next)) {
+      next.done = true;
+      return { state: next, event: 'win', idx: bestI };
+    }
+    return { state: next, event: 'hint', idx: bestI };
+  }
+
+  function stars(mistakes, hintsUsed) {
+    var p = mistakes + hintsUsed;
+    if (p <= 1) return 3;
+    if (p <= 3) return 2;
+    return 1;
+  }
+
+  function defaultProgress() {
+    return { v: 1, unlocked: 1, stars: {}, wins: {} };
+  }
+
+  function isPlainObject(o) {
+    return !!o && typeof o === 'object' && !Array.isArray(o);
+  }
+
+  function numbersOnly(o) {
+    var k;
+    for (k in o) {
+      if (Object.prototype.hasOwnProperty.call(o, k)) {
+        if (typeof o[k] !== 'number' || !isFinite(o[k])) return false;
+      }
+    }
+    return true;
+  }
+
+  function loadProgress(storage) {
+    var raw, data;
+    if (!storage || typeof storage.getItem !== 'function') return defaultProgress();
+    try {
+      raw = storage.getItem(PROGRESS_KEY);
+    } catch (e) {
+      return defaultProgress();
+    }
+    if (typeof raw !== 'string') return defaultProgress();
+    try {
+      data = JSON.parse(raw);
+    } catch (e2) {
+      return defaultProgress();
+    }
+    if (!isPlainObject(data) || data.v !== 1) return defaultProgress();
+    if (typeof data.unlocked !== 'number' || !isFinite(data.unlocked)) return defaultProgress();
+    if (!isPlainObject(data.stars) || !isPlainObject(data.wins)) return defaultProgress();
+    if (!numbersOnly(data.stars) || !numbersOnly(data.wins)) return defaultProgress();
+    return { v: 1, unlocked: data.unlocked, stars: data.stars, wins: data.wins };
+  }
+
+  function saveProgress(storage, progress) {
+    if (!storage || typeof storage.setItem !== 'function') return;
+    try {
+      storage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+    } catch (e) {}
+  }
+
+  function recordWin(progress, levelId, levelIndex, starCount, totalLevels) {
+    var starsMap = {};
+    var winsMap = {};
+    var k, prev, unlocked, nextUnlock;
+    for (k in progress.stars) {
+      if (Object.prototype.hasOwnProperty.call(progress.stars, k)) starsMap[k] = progress.stars[k];
+    }
+    for (k in progress.wins) {
+      if (Object.prototype.hasOwnProperty.call(progress.wins, k)) winsMap[k] = progress.wins[k];
+    }
+    prev = Object.prototype.hasOwnProperty.call(starsMap, levelId) ? starsMap[levelId] : 0;
+    starsMap[levelId] = starCount > prev ? starCount : prev;
+    winsMap[levelId] = (Object.prototype.hasOwnProperty.call(winsMap, levelId) ? winsMap[levelId] : 0) + 1;
+    nextUnlock = levelIndex + 2;
+    if (nextUnlock > totalLevels) nextUnlock = totalLevels;
+    unlocked = progress.unlocked;
+    if (nextUnlock > unlocked) unlocked = nextUnlock;
+    return { v: progress.v, unlocked: unlocked, stars: starsMap, wins: winsMap };
+  }
+
+  var Core = {
+    GIVENS: GIVENS,
+    makeRng: makeRng,
+    boxShape: boxShape,
+    isValidPlacement: isValidPlacement,
+    solve: solve,
+    countSolutions: countSolutions,
+    generate: generate,
+    createState: createState,
+    applyMove: applyMove,
+    hint: hint,
+    isComplete: isComplete,
+    stars: stars,
+    loadProgress: loadProgress,
+    saveProgress: saveProgress,
+    recordWin: recordWin
+  };
+
+  root.SudokuCore = Core;
+  if (typeof module !== 'undefined' && module.exports) module.exports = Core;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+  </script>
+  <script>
+(function (root) {
+  'use strict';
+
+  var THEME_STORAGE_KEY = 'daisy-sudoku-theme';
+  var SOUND_STORAGE_KEY = 'daisy-sudoku-sound';
+
+  var currentThemeId = 'farm';
+  var soundEnabled = true;
+  var progress = null;
+  var currentLevelIndex = 0;
+  var currentState = null;
+  var selectedIdx = -1;
+  var winTimer = null;
+  var audioCtx = null;
+
+  function safeGetStorage() {
+    try {
+      return root.localStorage || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function safeGetItem(key) {
+    try {
+      var st = safeGetStorage();
+      return st ? st.getItem(key) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function safeSetItem(key, val) {
+    try {
+      var st = safeGetStorage();
+      if (st) st.setItem(key, val);
+    } catch (e) {
+      /* ignore storage errors */
+    }
+  }
+
+  function getData() {
+    return root.SUDOKU_DATA || {
+      levels: [],
+      themes: [],
+      praise: ['太棒了！'],
+      gentle: ['再想想哦'],
+      hintSay: ['看看这里']
+    };
+  }
+
+  function getCore() {
+    return root.SudokuCore;
+  }
+
+  function getCurrentTheme() {
+    var data = getData();
+    var themes = data.themes || [];
+    for (var i = 0; i < themes.length; i++) {
+      if (themes[i].id === currentThemeId) return themes[i];
+    }
+    return themes[0] || { id: 'farm', name: '农场', emoji: '🚜', color: '#F29544', animals: [] };
+  }
+
+  function pickRandom(arr, fallback) {
+    if (!arr || !arr.length) return fallback || '';
+    var idx = Math.floor(Math.random() * arr.length);
+    return arr[idx];
+  }
+
+  /* ==================== AUDIO & SPEECH ==================== */
+  function getAudioContext() {
+    if (!soundEnabled) return null;
+    try {
+      if (!audioCtx) {
+        var Ctx = root.AudioContext || root.webkitAudioContext;
+        if (Ctx) audioCtx = new Ctx();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function playToneSequence(notes) {
+    if (!soundEnabled) return;
+    try {
+      var ctx = getAudioContext();
+      if (!ctx) return;
+      var now = ctx.currentTime;
+      for (var i = 0; i < notes.length; i++) {
+        var n = notes[i];
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.type = n.type || 'sine';
+        osc.frequency.setValueAtTime(n.freq, now + n.start);
+        if (n.endFreq) {
+          osc.frequency.exponentialRampToValueAtTime(n.endFreq, now + n.start + n.dur);
+        }
+        gain.gain.setValueAtTime(0.001, now + n.start);
+        gain.gain.linearRampToValueAtTime(n.gain || 0.16, now + n.start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + n.start + n.dur);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + n.start);
+        osc.stop(now + n.start + n.dur + 0.015);
+      }
+    } catch (e) {
+      /* ignore WebAudio errors */
+    }
+  }
+
+  function playPlaceSound() {
+    // WebAudio 合成两个上行音 ("啵"地跳一下)
+    playToneSequence([
+      { freq: 440, endFreq: 523.25, start: 0, dur: 0.11, type: 'triangle', gain: 0.18 },
+      { freq: 587.33, endFreq: 698.46, start: 0.09, dur: 0.16, type: 'triangle', gain: 0.2 }
+    ]);
+  }
+
+  function playMistakeSound() {
+    // 轻柔低音
+    playToneSequence([
+      { freq: 240, endFreq: 196, start: 0, dur: 0.24, type: 'sine', gain: 0.14 }
+    ]);
+  }
+
+  function playHintSound() {
+    playToneSequence([
+      { freq: 523.25, start: 0, dur: 0.1, type: 'sine', gain: 0.15 },
+      { freq: 659.25, start: 0.08, dur: 0.12, type: 'sine', gain: 0.15 },
+      { freq: 783.99, start: 0.16, dur: 0.2, type: 'sine', gain: 0.16 }
+    ]);
+  }
+
+  function playWinChord() {
+    // 胜利和弦
+    playToneSequence([
+      { freq: 523.25, start: 0, dur: 0.35, type: 'triangle', gain: 0.14 },
+      { freq: 659.25, start: 0.07, dur: 0.35, type: 'triangle', gain: 0.14 },
+      { freq: 783.99, start: 0.14, dur: 0.4, type: 'triangle', gain: 0.14 },
+      { freq: 1046.5, start: 0.22, dur: 0.55, type: 'triangle', gain: 0.16 }
+    ]);
+  }
+
+  function speakText(text) {
+    setToastText(text);
+    if (!soundEnabled || !text) return;
+    try {
+      var synth = root.speechSynthesis;
+      if (!synth || typeof root.SpeechSynthesisUtterance !== 'function') return;
+      synth.cancel();
+      var utter = new root.SpeechSynthesisUtterance(String(text));
+      utter.lang = 'zh-CN';
+      utter.rate = 0.85;
+      synth.speak(utter);
+    } catch (e) {
+      /* ignore speech errors */
+    }
+  }
+
+  function setToastText(text) {
+    var toast = document.getElementById('speech-toast');
+    if (toast && text) {
+      toast.textContent = text;
+    }
+  }
+
+  /* ==================== THEME & SOUND SETTINGS ==================== */
+  function loadSettings() {
+    var data = getData();
+    var savedTheme = safeGetItem(THEME_STORAGE_KEY);
+    if (savedTheme && data.themes) {
+      for (var i = 0; i < data.themes.length; i++) {
+        if (data.themes[i].id === savedTheme) {
+          currentThemeId = savedTheme;
+          break;
+        }
+      }
+    } else if (data.themes && data.themes[0]) {
+      currentThemeId = data.themes[0].id;
+    }
+
+    var savedSound = safeGetItem(SOUND_STORAGE_KEY);
+    if (savedSound === '0') {
+      soundEnabled = false;
+    } else if (savedSound === '1') {
+      soundEnabled = true;
+    } else {
+      soundEnabled = true;
+    }
+  }
+
+  function applyThemeAccent() {
+    var theme = getCurrentTheme();
+    if (theme && theme.color) {
+      document.documentElement.style.setProperty('--accent', theme.color);
+    }
+  }
+
+  function updateSoundButtonUI() {
+    var btn = document.getElementById('btn-sound');
+    if (!btn) return;
+    btn.setAttribute('aria-pressed', soundEnabled ? 'true' : 'false');
+    btn.textContent = soundEnabled ? '🔊' : '🔇';
+  }
+
+  function toggleSound() {
+    soundEnabled = !soundEnabled;
+    safeSetItem(SOUND_STORAGE_KEY, soundEnabled ? '1' : '0');
+    if (!soundEnabled) {
+      try {
+        if (root.speechSynthesis) root.speechSynthesis.cancel();
+      } catch (e) {
+        /* ignore */
+      }
+    }
+    updateSoundButtonUI();
+  }
+
+  /* ==================== HOME SCREEN RENDERING ==================== */
+  function renderThemes() {
+    var container = document.getElementById('theme-list');
+    if (!container) return;
+    var data = getData();
+    var themes = data.themes || [];
+    container.innerHTML = '';
+
+    for (var i = 0; i < themes.length; i++) {
+      (function (theme) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'theme-btn' + (theme.id === currentThemeId ? ' is-selected' : '');
+        btn.setAttribute('data-theme', theme.id);
+        btn.style.setProperty('--theme-color', theme.color || '#F29544');
+
+        var top = document.createElement('div');
+        top.className = 'theme-btn-top';
+        var emo = document.createElement('span');
+        emo.className = 'theme-btn-emoji';
+        emo.textContent = theme.emoji;
+        var nm = document.createElement('span');
+        nm.textContent = theme.name;
+        top.appendChild(emo);
+        top.appendChild(nm);
+
+        var animalsRow = document.createElement('div');
+        animalsRow.className = 'theme-btn-animals';
+        var animals = (theme.animals || []).slice(0, 4);
+        for (var j = 0; j < animals.length; j++) {
+          var sp = document.createElement('span');
+          sp.textContent = animals[j].emoji;
+          animalsRow.appendChild(sp);
+        }
+
+        btn.appendChild(top);
+        btn.appendChild(animalsRow);
+
+        btn.addEventListener('click', function () {
+          selectTheme(theme.id);
+        });
+
+        container.appendChild(btn);
+      })(themes[i]);
+    }
+  }
+
+  function selectTheme(themeId) {
+    currentThemeId = themeId;
+    safeSetItem(THEME_STORAGE_KEY, themeId);
+    applyThemeAccent();
+
+    var btns = document.querySelectorAll('.theme-btn');
+    for (var i = 0; i < btns.length; i++) {
+      var b = btns[i];
+      if (b.getAttribute('data-theme') === themeId) {
+        b.classList.add('is-selected');
+      } else {
+        b.classList.remove('is-selected');
+      }
+    }
+
+    if (currentState) {
+      renderBoardCells();
+      renderPalette();
+    }
+  }
+
+  function renderLevels() {
+    var container = document.getElementById('level-list');
+    if (!container) return;
+    var data = getData();
+    var levels = data.levels || [];
+    var unlockedCount = (progress && typeof progress.unlocked === 'number') ? progress.unlocked : 1;
+    var starsMap = (progress && progress.stars) ? progress.stars : {};
+
+    container.innerHTML = '';
+
+    for (var i = 0; i < levels.length; i++) {
+      (function (level, idx) {
+        var isLocked = idx >= unlockedCount;
+        var earnedStars = starsMap[level.id] || 0;
+
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'level-btn' + (isLocked ? ' is-locked' : '');
+        btn.setAttribute('data-level', String(idx));
+
+        if (isLocked) {
+          var lockBadge = document.createElement('span');
+          lockBadge.className = 'level-lock-badge';
+          lockBadge.textContent = '🔒';
+          btn.appendChild(lockBadge);
+        }
+
+        var head = document.createElement('div');
+        head.className = 'level-head';
+        var emo = document.createElement('span');
+        emo.className = 'level-emoji';
+        emo.textContent = level.emoji;
+        var nameSpan = document.createElement('span');
+        nameSpan.className = 'level-name-text';
+        nameSpan.textContent = level.name;
+        head.appendChild(emo);
+        head.appendChild(nameSpan);
+
+        var starsWrap = document.createElement('div');
+        starsWrap.className = 'level-stars';
+        for (var s = 1; s <= 3; s++) {
+          var st = document.createElement('span');
+          st.className = 'star' + (s <= earnedStars ? ' is-on' : '');
+          st.textContent = '⭐';
+          starsWrap.appendChild(st);
+        }
+
+        btn.appendChild(head);
+        btn.appendChild(starsWrap);
+
+        btn.addEventListener('click', function () {
+          if (btn.classList.contains('is-locked')) {
+            btn.classList.remove('is-shake');
+            void btn.offsetWidth;
+            btn.classList.add('is-shake');
+            playMistakeSound();
+            setTimeout(function () {
+              btn.classList.remove('is-shake');
+            }, 450);
+            return;
+          }
+          startGame(idx);
+        });
+
+        container.appendChild(btn);
+      })(levels[i], i);
+    }
+  }
+
+  /* ==================== SCREEN NAVIGATION ==================== */
+  function showScreen(screenId) {
+    var screens = document.querySelectorAll('.screen');
+    for (var i = 0; i < screens.length; i++) {
+      var sc = screens[i];
+      if (sc.id === screenId) {
+        sc.classList.add('is-active');
+        sc.removeAttribute('hidden');
+      } else {
+        sc.classList.remove('is-active');
+        sc.setAttribute('hidden', '');
+      }
+    }
+  }
+
+  function hideWinOverlay() {
+    if (winTimer) {
+      clearTimeout(winTimer);
+      winTimer = null;
+    }
+    var overlay = document.getElementById('win-overlay');
+    if (overlay) {
+      overlay.setAttribute('hidden', '');
+    }
+    var confetti = document.getElementById('confetti-layer');
+    if (confetti) {
+      confetti.innerHTML = '';
+    }
+  }
+
+  function goHome() {
+    hideWinOverlay();
+    renderThemes();
+    renderLevels();
+    showScreen('screen-home');
+  }
+
+  /* ==================== GAME START & RENDERING ==================== */
+  function startGame(levelIndex, customSeed) {
+    var core = getCore();
+    var data = getData();
+    var levels = data.levels || [];
+    if (!core || !levels.length) return;
+
+    var idx = Number(levelIndex);
+    if (!Number.isInteger(idx) || idx < 0 || idx >= levels.length) {
+      idx = 0;
+    }
+    currentLevelIndex = idx;
+    var level = levels[idx];
+
+    var seed = (customSeed !== undefined && customSeed !== null)
+      ? (Number(customSeed) >>> 0)
+      : ((Date.now() & 0x7fffffff) >>> 0);
+
+    var rng = core.makeRng(seed);
+    var gen = core.generate(level.size, level.difficulty, rng);
+    currentState = core.createState(gen);
+    selectedIdx = -1;
+
+    hideWinOverlay();
+    applyThemeAccent();
+
+    var levelNameEl = document.getElementById('level-name');
+    if (levelNameEl) {
+      levelNameEl.textContent = level.emoji + ' ' + level.name;
+    }
+
+    var boardEl = document.getElementById('board');
+    if (boardEl) {
+      boardEl.style.setProperty('--size', String(level.size));
+    }
+    var paletteEl = document.getElementById('palette');
+    if (paletteEl) {
+      paletteEl.style.setProperty('--size', String(level.size));
+      paletteEl.setAttribute('data-size', String(level.size));
+    }
+
+    buildBoardDOM(level.size);
+    renderBoardCells();
+    renderPalette();
+    updatePaletteIdleState();
+    setToastText('点一格空床位，抱小动物上床睡觉吧');
+
+    showScreen('screen-game');
+  }
+
+  function buildBoardDOM(size) {
+    var boardEl = document.getElementById('board');
+    if (!boardEl) return;
+    var core = getCore();
+    var shape = core.boxShape(size);
+    var boxRows = shape[0];
+    var boxCols = shape[1];
+    var boxesPerRow = size / boxCols;
+
+    boardEl.innerHTML = '';
+
+    for (var idx = 0; idx < size * size; idx++) {
+      var r = Math.floor(idx / size);
+      var c = idx % size;
+      var br = Math.floor(r / boxRows);
+      var bc = Math.floor(c / boxCols);
+      var boxIndex = (size === 4) ? ((br + bc) % 4) : ((br * boxesPerRow + bc) % 6);
+
+      var cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = 'cell';
+      cell.setAttribute('data-idx', String(idx));
+      cell.setAttribute('data-box', String(boxIndex));
+      cell.setAttribute('role', 'gridcell');
+
+      if (c === size - 1) {
+        cell.classList.add('is-last-col');
+      } else if ((c + 1) % boxCols === 0) {
+        cell.classList.add('is-box-right');
+      }
+
+      if (r === size - 1) {
+        cell.classList.add('is-last-row');
+      } else if ((r + 1) % boxRows === 0) {
+        cell.classList.add('is-box-bottom');
+      }
+
+      // 每格内只有一个 <span class="animal"> 放 emoji
+      var animalSpan = document.createElement('span');
+      animalSpan.className = 'animal';
+      cell.appendChild(animalSpan);
+
+      (function (cellIdx) {
+        cell.addEventListener('click', function () {
+          onCellClick(cellIdx);
+        });
+      })(idx);
+
+      boardEl.appendChild(cell);
+    }
+  }
+
+  function getCellEl(idx) {
+    var boardEl = document.getElementById('board');
+    if (!boardEl) return null;
+    return boardEl.querySelector('.cell[data-idx="' + idx + '"]');
+  }
+
+  function renderBoardCells() {
+    if (!currentState) return;
+    var theme = getCurrentTheme();
+    var animals = theme.animals || [];
+    var size = currentState.size;
+
+    for (var idx = 0; idx < size * size; idx++) {
+      var cell = getCellEl(idx);
+      if (!cell) continue;
+      var val = currentState.cells[idx];
+      var isGiven = currentState.puzzle[idx] !== 0;
+
+      cell.classList.toggle('is-given', isGiven);
+      cell.classList.toggle('is-filled', !isGiven && val !== 0);
+      cell.classList.toggle('is-selected', idx === selectedIdx);
+
+      var span = cell.querySelector('.animal');
+      if (span) {
+        if (val >= 1 && val <= animals.length) {
+          span.textContent = animals[val - 1].emoji;
+        } else {
+          span.textContent = '';
+        }
+      }
+    }
+  }
+
+  function renderPalette() {
+    var paletteEl = document.getElementById('palette');
+    if (!paletteEl || !currentState) return;
+    var theme = getCurrentTheme();
+    var animals = theme.animals || [];
+    var size = currentState.size;
+
+    paletteEl.innerHTML = '';
+
+    for (var v = 1; v <= size; v++) {
+      (function (val) {
+        var animal = animals[val - 1] || { emoji: '🐾', name: '动物' };
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'pal-btn';
+        btn.setAttribute('data-val', String(val));
+        btn.setAttribute('aria-label', animal.name);
+
+        var emo = document.createElement('span');
+        emo.className = 'pal-emoji';
+        emo.textContent = animal.emoji;
+
+        var nm = document.createElement('span');
+        nm.className = 'pal-name';
+        nm.textContent = animal.name;
+
+        btn.appendChild(emo);
+        btn.appendChild(nm);
+
+        btn.addEventListener('click', function () {
+          onPaletteClick(val);
+        });
+
+        paletteEl.appendChild(btn);
+      })(v);
+    }
+  }
+
+  function updatePaletteIdleState() {
+    var paletteEl = document.getElementById('palette');
+    if (!paletteEl) return;
+    if (selectedIdx === -1 || !currentState || currentState.done) {
+      paletteEl.classList.add('is-idle');
+    } else {
+      paletteEl.classList.remove('is-idle');
+    }
+  }
+
+  /* ==================== INTERACTIONS ==================== */
+  function onCellClick(idx) {
+    if (!currentState || currentState.done) return;
+    var val = currentState.cells[idx];
+    var isGiven = currentState.puzzle[idx] !== 0;
+    var theme = getCurrentTheme();
+    var animals = theme.animals || [];
+
+    // 点已给格或已填格只读出该动物的 say，不选中
+    if (isGiven || val !== 0) {
+      var animal = animals[val - 1];
+      if (animal && animal.say) {
+        speakText(animal.say);
+      }
+      return;
+    }
+
+    // 点空格 → 选中，托盘亮起
+    selectedIdx = idx;
+    var cells = document.querySelectorAll('#board .cell');
+    for (var i = 0; i < cells.length; i++) {
+      var cIdx = Number(cells[i].getAttribute('data-idx'));
+      cells[i].classList.toggle('is-selected', cIdx === selectedIdx);
+    }
+    updatePaletteIdleState();
+    setToastText('选一只小动物放进格子里吧');
+  }
+
+  function onPaletteClick(val) {
+    if (!currentState || currentState.done) return;
+    // 没选格子时托盘半透明（.is-idle），点托盘无反应
+    if (selectedIdx < 0) return;
+
+    var targetIdx = selectedIdx;
+    var prevCells = currentState.cells.slice();
+    var core = getCore();
+    var res = core.applyMove(currentState, targetIdx, val);
+    currentState = res.state;
+
+    var theme = getCurrentTheme();
+    var animals = theme.animals || [];
+    var animal = animals[val - 1] || { emoji: '🐾', name: '小动物', say: '' };
+    var data = getData();
+    var cellEl = getCellEl(targetIdx);
+
+    if (res.event === 'mistake') {
+      // 格子 .is-shake，那只动物在格子里半透明闪现约 400ms 后消失；轻柔低音；读一句随机 gentle。选中保持。
+      playMistakeSound();
+      speakText(pickRandom(data.gentle, '再想想哦'));
+
+      if (cellEl) {
+        var span = cellEl.querySelector('.animal');
+        if (span) span.textContent = animal.emoji;
+        cellEl.classList.remove('is-shake');
+        void cellEl.offsetWidth;
+        cellEl.classList.add('is-shake', 'is-mistake-ghost');
+
+        setTimeout(function () {
+          if (cellEl) {
+            cellEl.classList.remove('is-mistake-ghost');
+            if (currentState && currentState.cells[targetIdx] === 0 && span) {
+              span.textContent = '';
+            }
+          }
+        }, 400);
+
+        setTimeout(function () {
+          if (cellEl) cellEl.classList.remove('is-shake');
+        }, 450);
+      }
+      return;
+    }
+
+    if (res.event === 'place' || res.event === 'win') {
+      // 选中自动取消
+      selectedIdx = -1;
+      updatePaletteIdleState();
+
+      if (cellEl) {
+        cellEl.classList.remove('is-selected', 'is-shake', 'is-mistake-ghost');
+        cellEl.classList.add('is-filled');
+        var animalSpan = cellEl.querySelector('.animal');
+        if (animalSpan) {
+          animalSpan.textContent = animal.emoji;
+        }
+      }
+
+      playPlaceSound();
+      speakText(animal.name);
+      flashCompletedUnits(prevCells, currentState.cells, currentState.size, targetIdx);
+
+      if (res.event === 'win') {
+        handleWin();
+      }
+    }
+  }
+
+  function onHintClick() {
+    if (!currentState || currentState.done) return;
+    var core = getCore();
+    var data = getData();
+    var prevCells = currentState.cells.slice();
+    var res = core.hint(currentState);
+    if (res.event === 'ignored' || res.idx < 0) return;
+
+    currentState = res.state;
+    var hintIdx = res.idx;
+    if (selectedIdx === hintIdx) {
+      selectedIdx = -1;
+      updatePaletteIdleState();
+    }
+
+    var val = currentState.cells[hintIdx];
+    var theme = getCurrentTheme();
+    var animal = (theme.animals && theme.animals[val - 1]) || { emoji: '🐾', name: '小动物' };
+    var cellEl = getCellEl(hintIdx);
+
+    if (cellEl) {
+      cellEl.classList.remove('is-selected', 'is-shake', 'is-mistake-ghost', 'is-hinted');
+      void cellEl.offsetWidth;
+      cellEl.classList.add('is-filled', 'is-hinted');
+      var span = cellEl.querySelector('.animal');
+      if (span) span.textContent = animal.emoji;
+    }
+
+    playHintSound();
+    speakText(pickRandom(data.hintSay, '看看这里'));
+    flashCompletedUnits(prevCells, currentState.cells, currentState.size, hintIdx);
+
+    if (res.event === 'win') {
+      handleWin();
+    }
+  }
+
+  function flashCompletedUnits(prevCells, nextCells, size, changedIdx) {
+    var core = getCore();
+    if (!core) return;
+    var shape = core.boxShape(size);
+    var brSize = shape[0];
+    var bcSize = shape[1];
+
+    var row = Math.floor(changedIdx / size);
+    var col = changedIdx % size;
+    var boxR = Math.floor(row / brSize) * brSize;
+    var boxC = Math.floor(col / bcSize) * bcSize;
+
+    var toFlash = [];
+
+    // Check row
+    var rowDoneBefore = true;
+    var rowDoneAfter = true;
+    for (var c = 0; c < size; c++) {
+      if (prevCells[row * size + c] === 0) rowDoneBefore = false;
+      if (nextCells[row * size + c] === 0) rowDoneAfter = false;
+    }
+    if (!rowDoneBefore && rowDoneAfter) {
+      for (var c2 = 0; c2 < size; c2++) toFlash.push(row * size + c2);
+    }
+
+    // Check col
+    var colDoneBefore = true;
+    var colDoneAfter = true;
+    for (var r = 0; r < size; r++) {
+      if (prevCells[r * size + col] === 0) colDoneBefore = false;
+      if (nextCells[r * size + col] === 0) colDoneAfter = false;
+    }
+    if (!colDoneBefore && colDoneAfter) {
+      for (var r2 = 0; r2 < size; r2++) toFlash.push(r2 * size + col);
+    }
+
+    // Check box
+    var boxDoneBefore = true;
+    var boxDoneAfter = true;
+    for (var dr = 0; dr < brSize; dr++) {
+      for (var dc = 0; dc < bcSize; dc++) {
+        var bIdx = (boxR + dr) * size + (boxC + dc);
+        if (prevCells[bIdx] === 0) boxDoneBefore = false;
+        if (nextCells[bIdx] === 0) boxDoneAfter = false;
+      }
+    }
+    if (!boxDoneBefore && boxDoneAfter) {
+      for (var dr2 = 0; dr2 < brSize; dr2++) {
+        for (var dc2 = 0; dc2 < bcSize; dc2++) {
+          toFlash.push((boxR + dr2) * size + (boxC + dc2));
+        }
+      }
+    }
+
+    for (var i = 0; i < toFlash.length; i++) {
+      (function (idx) {
+        var el = getCellEl(idx);
+        if (!el) return;
+        el.classList.remove('is-line-flash');
+        void el.offsetWidth;
+        el.classList.add('is-line-flash');
+        setTimeout(function () {
+          el.classList.remove('is-line-flash');
+        }, 780);
+      })(toFlash[i]);
+    }
+  }
+
+  /* ==================== WIN HANDLING ==================== */
+  function handleWin() {
+    var core = getCore();
+    var data = getData();
+    var levels = data.levels || [];
+    var level = levels[currentLevelIndex] || { id: 'easy' };
+
+    var earnedStars = core.stars(currentState.mistakes, currentState.hintsUsed);
+    progress = core.recordWin(progress, level.id, currentLevelIndex, earnedStars, levels.length);
+    core.saveProgress(safeGetStorage(), progress);
+
+    // 同步更新首页关卡列表 DOM（锁与星级）
+    renderLevels();
+
+    if (winTimer) clearTimeout(winTimer);
+    winTimer = setTimeout(function () {
+      showWinOverlay(earnedStars);
+    }, 700);
+  }
+
+  function showWinOverlay(earnedStars) {
+    var data = getData();
+    var levels = data.levels || [];
+    var overlay = document.getElementById('win-overlay');
+    if (!overlay) return;
+
+    var praise = pickRandom(data.praise, '太棒了！');
+    var praiseEl = document.getElementById('win-praise-text');
+    if (praiseEl) praiseEl.textContent = praise;
+
+    var starEls = document.querySelectorAll('#win-stars .star');
+    for (var i = 0; i < starEls.length; i++) {
+      if (i < earnedStars) {
+        starEls[i].classList.add('is-on');
+      } else {
+        starEls[i].classList.remove('is-on');
+      }
+    }
+
+    var nextBtn = document.getElementById('btn-next');
+    if (nextBtn) {
+      var isLastLevel = currentLevelIndex >= levels.length - 1;
+      var labelSpan = nextBtn.querySelector('.win-btn-label');
+      if (labelSpan) {
+        labelSpan.textContent = isLastLevel ? '再玩一次' : '下一关';
+      } else {
+        nextBtn.textContent = isLastLevel ? '再玩一次' : '下一关';
+      }
+    }
+
+    spawnConfetti();
+    overlay.removeAttribute('hidden');
+    playWinChord();
+    speakText(praise);
+  }
+
+  function spawnConfetti() {
+    var container = document.getElementById('confetti-layer');
+    if (!container) return;
+    container.innerHTML = '';
+    var colors = ['#F29544', '#5FB3C9', '#F6B5C0', '#FFE7A3', '#6A9C5B', '#9B6BB3'];
+    for (var i = 0; i < 28; i++) {
+      var p = document.createElement('span');
+      p.className = 'confetti-piece';
+      p.style.left = ((i * 3.6 + (i % 3) * 2) % 98) + '%';
+      p.style.backgroundColor = colors[i % colors.length];
+      p.style.animationDelay = ((i % 7) * 0.12) + 's';
+      p.style.animationDuration = (2.1 + (i % 5) * 0.22) + 's';
+      container.appendChild(p);
+    }
+  }
+
+  /* ==================== KEYBOARD SUPPORT ==================== */
+  function onKeyDown(e) {
+    var gameScreen = document.getElementById('screen-game');
+    if (!gameScreen || gameScreen.hasAttribute('hidden') || !currentState || currentState.done) {
+      return;
+    }
+    var overlay = document.getElementById('win-overlay');
+    if (overlay && !overlay.hasAttribute('hidden')) {
+      return;
+    }
+
+    var size = currentState.size;
+    var key = e.key;
+
+    if (key === 'ArrowUp' || key === 'ArrowDown' || key === 'ArrowLeft' || key === 'ArrowRight') {
+      e.preventDefault();
+      var start = selectedIdx >= 0 ? selectedIdx : 0;
+      var r = Math.floor(start / size);
+      var c = start % size;
+      var dr = key === 'ArrowUp' ? -1 : key === 'ArrowDown' ? 1 : 0;
+      var dc = key === 'ArrowLeft' ? -1 : key === 'ArrowRight' ? 1 : 0;
+
+      for (var step = 0; step < size * size; step++) {
+        r = (r + dr + size) % size;
+        c = (c + dc + size) % size;
+        var cand = r * size + c;
+        if (currentState.puzzle[cand] === 0 && currentState.cells[cand] === 0) {
+          onCellClick(cand);
+          var el = getCellEl(cand);
+          if (el) el.focus();
+          break;
+        }
+        if (dr === 0 && dc !== 0 && step % size === size - 1) {
+          r = (r + 1) % size;
+        } else if (dc === 0 && dr !== 0 && step % size === size - 1) {
+          c = (c + 1) % size;
+        }
+      }
+      return;
+    }
+
+    var num = parseInt(key, 10);
+    if ( num >= 1 && num <= size && selectedIdx >= 0) {
+      e.preventDefault();
+      onPaletteClick(num);
+    }
+  }
+
+  /* ==================== INITIALIZATION ==================== */
+  function bindStaticEvents() {
+    var btnHome = document.getElementById('btn-home');
+    if (btnHome) {
+      btnHome.addEventListener('click', goHome);
+    }
+
+    var btnHint = document.getElementById('btn-hint');
+    if (btnHint) {
+      btnHint.addEventListener('click', onHintClick);
+    }
+
+    var btnSound = document.getElementById('btn-sound');
+    if (btnSound) {
+      btnSound.addEventListener('click', toggleSound);
+    }
+
+    var btnNext = document.getElementById('btn-next');
+    if (btnNext) {
+      btnNext.addEventListener('click', function () {
+        var data = getData();
+        var levels = data.levels || [];
+        if (currentLevelIndex < levels.length - 1) {
+          startGame(currentLevelIndex + 1);
+        } else {
+          startGame(currentLevelIndex);
+        }
+      });
+    }
+
+    var btnAgain = document.getElementById('btn-again');
+    if (btnAgain) {
+      btnAgain.addEventListener('click', function () {
+        startGame(currentLevelIndex);
+      });
+    }
+
+    var btnWinHome = document.getElementById('btn-win-home');
+    if (btnWinHome) {
+      btnWinHome.addEventListener('click', goHome);
+    }
+
+    document.addEventListener('keydown', onKeyDown);
+  }
+
+  function initApp() {
+    var core = getCore();
+    loadSettings();
+    applyThemeAccent();
+    updateSoundButtonUI();
+
+    if (core && typeof core.loadProgress === 'function') {
+      progress = core.loadProgress(safeGetStorage());
+    } else {
+      progress = { v: 1, unlocked: 1, stars: {}, wins: {} };
+    }
+
+    bindStaticEvents();
+    renderThemes();
+    renderLevels();
+    showScreen('screen-home');
+  }
+
+  // 测试钩子（必须有）：window.SudokuApp = { start(levelIndex, seed), getState(), getProgress() }
+  root.SudokuApp = {
+    start: function (levelIndex, seed) {
+      startGame(levelIndex, seed);
+      return currentState;
+    },
+    getState: function () {
+      return currentState;
+    },
+    getProgress: function () {
+      return progress;
+    }
+  };
+
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+      initApp();
+    }
+  }
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+  </script>
+</body>
+</html>

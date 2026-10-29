@@ -1,0 +1,1945 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>认汉字翻翻乐</title>
+  <style>
+/* ==========================================================================
+   认汉字翻翻乐 — 剪纸拼贴绘本风 (Cut-Paper Picture Book Style)
+   Palette & Visual System per spec v1
+   ========================================================================== */
+
+:root {
+  --bg-cream: #FFF6E5;
+  --paper-light: #FFFDF7;
+  --ink: #3B2A20;
+  --ink-soft: #6E5646;
+  --tomato: #FF6B4A;
+  --leaf: #3FA37C;
+  --sky: #4AA8FF;
+  --sun: #FFC43D;
+  --blush: #FFD6CC;
+  --stone-locked: #D8CFC2;
+  --stone-locked-dark: #B5A999;
+
+  --font-kaiti: "STKaiti", "KaiTi", "Kaiti SC", "Noto Serif SC", serif;
+  --font-ui: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+
+  --card-radius: 18px;
+  --border-ink: 2px solid var(--ink);
+  --shadow-hard: 4px 4px 0 var(--ink);
+  --shadow-hard-lg: 6px 6px 0 var(--ink);
+  --shadow-hard-press: 1px 1px 0 var(--ink);
+  --flip-duration: 350ms;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+  background-color: var(--bg-cream);
+  color: var(--ink);
+  font-family: var(--font-ui);
+}
+
+/* Paper grain texture + subtle dot-and-fiber background */
+body {
+  position: relative;
+  background-image:
+    radial-gradient(rgba(59, 42, 32, 0.045) 1.25px, transparent 1.25px),
+    radial-gradient(rgba(255, 196, 61, 0.09) 1.5px, transparent 1.5px),
+    linear-gradient(180deg, #FFF6E5 0%, #FFF1D6 100%);
+  background-size: 26px 26px, 42px 42px, 100% 100%;
+  background-position: 0 0, 13px 17px, 0 0;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* ==========================================================================
+   Cut-Paper Background Collage Decorations (Clouds, Hills, Grass)
+   ========================================================================== */
+
+.paper-stage {
+  position: relative;
+  min-height: 100dvh;
+  width: 100%;
+  max-width: 100vw;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.deco-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.cutout-cloud {
+  position: absolute;
+  filter: drop-shadow(4px 4px 0 var(--ink));
+}
+
+.cutout-cloud--left {
+  top: 14px;
+  left: -18px;
+  width: clamp(110px, 20vw, 175px);
+  transform: rotate(-4deg);
+}
+
+.cutout-cloud--right {
+  top: 22px;
+  right: -16px;
+  width: clamp(105px, 18vw, 165px);
+  transform: rotate(5deg);
+}
+
+.cutout-grass {
+  position: absolute;
+  bottom: -8px;
+  filter: drop-shadow(4px -3px 0 var(--ink));
+}
+
+.cutout-grass--left {
+  left: -14px;
+  width: clamp(120px, 24vw, 210px);
+}
+
+.cutout-grass--right {
+  right: -14px;
+  width: clamp(120px, 24vw, 210px);
+}
+
+/* ==========================================================================
+   Screens Common
+   ========================================================================== */
+
+.screen {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 960px;
+  min-height: 100dvh;
+  padding: 16px 16px 32px;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+}
+
+.screen.is-active {
+  display: flex;
+}
+
+/* ==========================================================================
+   Cut-Paper Reusable Button Styles (Touch Target >= 88px)
+   ========================================================================== */
+
+.btn-cutout {
+  min-width: 88px;
+  min-height: 88px;
+  padding: 10px 16px;
+  border: var(--border-ink);
+  border-radius: 22px;
+  background: var(--paper-light);
+  color: var(--ink);
+  box-shadow: var(--shadow-hard);
+  font-family: var(--font-kaiti);
+  font-size: 1.25rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.btn-cutout:hover {
+  transform: translate(-1px, -1px) rotate(-1deg);
+}
+
+.btn-cutout:active {
+  transform: translate(3px, 3px);
+  box-shadow: var(--shadow-hard-press);
+}
+
+.btn-cutout:focus-visible,
+.level-btn:focus-visible,
+.card:focus-visible {
+  outline: 3px dashed var(--tomato);
+  outline-offset: 4px;
+}
+
+.btn-cutout .btn-icon {
+  font-size: 1.9rem;
+  line-height: 1;
+}
+
+.btn-cutout .btn-label {
+  font-size: 0.95rem;
+  line-height: 1.1;
+  letter-spacing: 0.04em;
+}
+
+/* ==========================================================================
+   1. Home Screen (#screen-home)
+   ========================================================================== */
+
+.home-header {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  margin-top: 6px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.home-hero-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 24px 14px;
+  background: var(--sun);
+  border: 3px solid var(--ink);
+  border-radius: 28px 22px 26px 20px;
+  box-shadow: var(--shadow-hard-lg);
+  transform: rotate(-1.2deg);
+}
+
+.home-hero-badge::before {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  z-index: -1;
+  background: var(--blush);
+  border: 2px solid var(--ink);
+  border-radius: 30px 24px 28px 24px;
+  transform: rotate(2.2deg);
+}
+
+.sun-deco {
+  width: 68px;
+  height: 68px;
+  flex-shrink: 0;
+  filter: drop-shadow(3px 3px 0 var(--ink));
+  animation: sun-wobble 5s ease-in-out infinite;
+}
+
+@keyframes sun-wobble {
+  0%, 100% { transform: rotate(-4deg) scale(1); }
+  50% { transform: rotate(6deg) scale(1.05); }
+}
+
+.home-title {
+  margin: 0;
+  font-family: var(--font-kaiti);
+  font-size: clamp(2rem, 6.2vw, 3.1rem);
+  font-weight: 900;
+  color: var(--ink);
+  letter-spacing: 0.06em;
+  text-shadow: 2px 2px 0 var(--paper-light);
+  line-height: 1.15;
+}
+
+.home-subtitle {
+  margin: 14px 0 0;
+  padding: 5px 16px;
+  background: var(--paper-light);
+  border: var(--border-ink);
+  border-radius: 999px;
+  box-shadow: 3px 3px 0 var(--ink);
+  font-family: var(--font-kaiti);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ink);
+  transform: rotate(0.8deg);
+}
+
+/* Winding Stepping-Stone Trail */
+.stone-trail-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 620px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 6px 24px;
+}
+
+.trail-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.stone-trail {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 22px;
+  justify-items: center;
+  align-items: center;
+}
+
+/* Winding stone offsets to create an S-curve picture-book path */
+.level-btn {
+  position: relative;
+  min-width: 132px;
+  min-height: 112px;
+  width: clamp(132px, 38vw, 176px);
+  padding: 12px 14px 10px;
+  border: 3px solid var(--ink);
+  border-radius: 46% 54% 48% 52% / 44% 48% 52% 56%;
+  background: var(--paper-light);
+  color: var(--ink);
+  box-shadow: 5px 6px 0 var(--ink);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.level-btn[data-level="0"] {
+  background: #FFF8D6;
+  transform: translateX(-8px) rotate(-2deg);
+}
+.level-btn[data-level="1"] {
+  background: var(--blush);
+  transform: translateX(8px) translateY(10px) rotate(2deg);
+  border-radius: 52% 48% 45% 55% / 48% 54% 46% 52%;
+}
+.level-btn[data-level="2"] {
+  background: #DDF7EC;
+  transform: translateX(10px) rotate(1.6deg);
+  border-radius: 48% 52% 54% 46% / 52% 45% 55% 48%;
+}
+.level-btn[data-level="3"] {
+  background: #E1F2FF;
+  transform: translateX(-10px) translateY(8px) rotate(-1.8deg);
+}
+.level-btn[data-level="4"] {
+  background: #FFE7C7;
+  transform: translateX(-6px) rotate(-1.4deg);
+  border-radius: 54% 46% 50% 50% / 46% 52% 48% 54%;
+}
+.level-btn[data-level="5"] {
+  background: #FFE0EC;
+  transform: translateX(8px) translateY(8px) rotate(2.1deg);
+}
+
+.level-btn:not(.is-locked):hover {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 7px 8px 0 var(--ink);
+}
+
+.level-btn:not(.is-locked):active {
+  transform: translate(3px, 3px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.level-num-pill {
+  position: absolute;
+  top: -10px;
+  left: 10px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--tomato);
+  color: #fff;
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  font-family: var(--font-kaiti);
+  font-size: 0.95rem;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.level-emoji {
+  font-size: 2.35rem;
+  line-height: 1.05;
+  filter: drop-shadow(2px 2px 0 rgba(59, 42, 32, 0.18));
+}
+
+.level-name {
+  font-family: var(--font-kaiti);
+  font-size: 1.2rem;
+  font-weight: 900;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.level-stars {
+  display: inline-flex;
+  gap: 3px;
+  font-size: 1.05rem;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.star-slot {
+  color: #D7CABB;
+  text-shadow: 1px 1px 0 var(--ink);
+}
+
+.star-slot.is-lit {
+  color: var(--sun);
+}
+
+/* Locked stone appearance */
+.level-btn.is-locked {
+  background: var(--stone-locked);
+  color: #7A6E63;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.level-btn.is-locked .level-num-pill {
+  background: var(--stone-locked-dark);
+  color: var(--ink);
+}
+
+.level-btn.is-locked .level-emoji {
+  filter: grayscale(0.95) opacity(0.65);
+}
+
+.level-lock-badge {
+  position: absolute;
+  top: -10px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--paper-light);
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+/* ==========================================================================
+   2. Game Screen (#screen-game)
+   ========================================================================== */
+
+.game-topbar {
+  width: 100%;
+  max-width: 820px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+#btn-home {
+  background: var(--blush);
+}
+
+#btn-sound {
+  background: var(--sun);
+}
+
+#btn-sound[aria-pressed="false"] {
+  background: var(--stone-locked);
+}
+
+.game-status-banner {
+  flex: 1;
+  min-height: 88px;
+  padding: 10px 14px;
+  background: var(--paper-light);
+  border: var(--border-ink);
+  border-radius: 22px;
+  box-shadow: var(--shadow-hard);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transform: rotate(-0.6deg);
+}
+
+.game-level-title {
+  margin: 0;
+  font-family: var(--font-kaiti);
+  font-size: clamp(1.3rem, 4vw, 1.75rem);
+  font-weight: 900;
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.game-moves-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 12px;
+  border-radius: 999px;
+  background: var(--bg-cream);
+  border: 1.5px solid var(--ink);
+  font-family: var(--font-kaiti);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+#moves {
+  display: inline-block;
+  min-width: 1.4em;
+  text-align: center;
+  font-family: var(--font-ui);
+  font-weight: 900;
+  color: var(--tomato);
+}
+
+/* ==========================================================================
+   Card Board (#board) & Thick Cut-Paper Cards (.card)
+   ========================================================================== */
+
+#board {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(88px, 1fr));
+  gap: 12px;
+  align-content: center;
+  justify-items: center;
+  padding: 4px 2px 18px;
+}
+
+/* Widescreen: 4 columns (6 pairs = 12 cards -> 4x3) */
+@media (min-width: 681px) {
+  #board {
+    max-width: 720px;
+    grid-template-columns: repeat(4, minmax(110px, 1fr));
+    gap: 16px;
+  }
+
+  .stone-trail {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+  }
+}
+
+.card {
+  position: relative;
+  width: 100%;
+  min-width: 88px;
+  min-height: 98px;
+  aspect-ratio: 3 / 3.45;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  perspective: 900px;
+  container-type: inline-size;
+  transform: rotate(var(--card-rot, 0deg));
+  transition: opacity 320ms ease, transform 220ms ease;
+}
+
+.card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform var(--flip-duration) cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.card.is-open .card-inner,
+.card.is-matched .card-inner {
+  transform: rotateY(180deg);
+}
+
+.card-face {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--card-radius);
+  border: var(--border-ink);
+  box-shadow: var(--shadow-hard);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Card Back: Sun Yellow with hand-drawn polka dots & center flower medallion */
+.card-back {
+  background-color: var(--sun);
+  background-image:
+    radial-gradient(var(--paper-light) 2.5px, transparent 2.5px),
+    radial-gradient(var(--tomato) 2px, transparent 2px);
+  background-size: 24px 24px;
+  background-position: 0 0, 12px 12px;
+}
+
+.card-back::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border: 2px dashed var(--ink);
+  border-radius: 12px;
+  pointer-events: none;
+  opacity: 0.65;
+}
+
+.card-back-flower {
+  width: 44%;
+  max-width: 56px;
+  aspect-ratio: 1;
+  filter: drop-shadow(2px 2px 0 var(--ink));
+}
+
+/* Card Front: Thick warm cream cardstock */
+.card-front {
+  background: var(--paper-light);
+  transform: rotateY(180deg);
+  padding: 6px;
+}
+
+.card[data-face="char"] .card-front {
+  background:
+    linear-gradient(180deg, #FFFDF9 0%, #FFF5E4 100%);
+}
+
+.card[data-face="pic"] .card-front {
+  background:
+    linear-gradient(180deg, #FFFDF9 0%, #FFEFE8 100%);
+}
+
+.card-front::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1.5px solid rgba(59, 42, 32, 0.16);
+  border-radius: 13px;
+  pointer-events: none;
+}
+
+/* Corner registration sticker */
+.card-corner-dot {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink);
+  background: var(--sky);
+}
+
+.card[data-face="char"] .card-corner-dot {
+  background: var(--tomato);
+}
+
+/* Hanzi Card typography: Pinyin on top, Kaiti Hanzi ~55% of card width */
+.card-pinyin {
+  font-family: var(--font-ui);
+  font-size: clamp(0.78rem, 13cqi, 1.05rem);
+  font-weight: 700;
+  color: var(--ink-soft);
+  line-height: 1.1;
+  margin-bottom: 2px;
+  letter-spacing: 0.02em;
+}
+
+.card-hanzi {
+  font-family: var(--font-kaiti);
+  font-size: clamp(2.1rem, 11vw, 3.8rem);
+  font-size: 55cqi;
+  font-weight: 900;
+  line-height: 1.05;
+  color: var(--ink);
+  text-shadow: 2px 2px 0 var(--blush);
+}
+
+/* Picture Card content: Large Emoji + Hanzi retention tag */
+.card-emoji {
+  font-size: clamp(2.2rem, 11vw, 3.8rem);
+  font-size: 52cqi;
+  line-height: 1.05;
+  filter: drop-shadow(2px 3px 0 rgba(59, 42, 32, 0.2));
+  transition: transform 240ms ease;
+}
+
+.card-word-chip {
+  margin-top: 3px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--sun);
+  border: 1.5px solid var(--ink);
+  font-family: var(--font-kaiti);
+  font-size: clamp(0.82rem, 14cqi, 1.05rem);
+  font-weight: 900;
+  color: var(--ink);
+  line-height: 1.15;
+}
+
+/* Matched state: hop animation, then semi-transparent after ~600ms while preserving Hanzi */
+.card.is-matched {
+  animation: card-match-hop 480ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.card.is-matched .card-front {
+  border-color: var(--leaf);
+  box-shadow: 4px 4px 0 var(--leaf);
+}
+
+.card.is-matched.is-settled-match {
+  opacity: 0.58;
+}
+
+/* Mismatch / Locked Shake Animation */
+.card.is-mismatch,
+.level-btn.is-shaking {
+  animation: paper-shake 420ms ease-in-out;
+}
+
+@keyframes card-match-hop {
+  0% { transform: rotate(var(--card-rot, 0deg)) scale(1); }
+  40% { transform: rotate(0deg) translateY(-10px) scale(1.08); }
+  75% { transform: rotate(var(--card-rot, 0deg)) translateY(2px) scale(0.98); }
+  100% { transform: rotate(var(--card-rot, 0deg)) scale(1); }
+}
+
+@keyframes paper-shake {
+  0%, 100% { transform: translateX(0) rotate(var(--card-rot, 0deg)); }
+  20% { transform: translateX(-8px) rotate(-4deg); }
+  40% { transform: translateX(8px) rotate(4deg); }
+  60% { transform: translateX(-6px) rotate(-3deg); }
+  80% { transform: translateX(6px) rotate(3deg); }
+}
+
+/* ==========================================================================
+   3. Win Overlay (#win-overlay) & Confetti
+   ========================================================================== */
+
+#win-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(59, 42, 32, 0.58);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+#win-overlay.is-visible {
+  display: flex;
+}
+
+.confetti-box {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: -24px;
+  width: 14px;
+  height: 20px;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  animation: confetti-fall 2200ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-20px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(92vh) rotate(520deg);
+    opacity: 0;
+  }
+}
+
+.win-card {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 420px;
+  padding: 26px 22px 22px;
+  background: var(--bg-cream);
+  border: 3px solid var(--ink);
+  border-radius: 28px;
+  box-shadow: 8px 8px 0 var(--ink);
+  text-align: center;
+  transform: rotate(-1deg);
+}
+
+.win-banner {
+  display: inline-block;
+  margin: 0 0 10px;
+  padding: 6px 22px;
+  background: var(--tomato);
+  color: #fff;
+  border: 2.5px solid var(--ink);
+  border-radius: 999px;
+  box-shadow: 3px 3px 0 var(--ink);
+  font-family: var(--font-kaiti);
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+
+#win-stars {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 14px 0 20px;
+  min-height: 68px;
+}
+
+.win-star {
+  font-size: 3.4rem;
+  line-height: 1;
+  color: #D9CFC2;
+  text-shadow: 3px 3px 0 var(--ink);
+  transform: scale(0.2);
+  opacity: 0;
+}
+
+.win-star.is-popped {
+  opacity: 1;
+  transform: scale(1) rotate(var(--star-rot, -5deg));
+  transition: transform 320ms cubic-bezier(0.34, 1.65, 0.64, 1), opacity 200ms ease;
+}
+
+.win-star.is-earned {
+  color: var(--sun);
+}
+
+.win-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+#btn-next {
+  background: var(--leaf);
+  color: #fff;
+  min-width: 142px;
+}
+
+#btn-win-home {
+  background: var(--blush);
+  min-width: 118px;
+}
+
+/* ==========================================================================
+   Reduced Motion Preference (prefers-reduced-motion: reduce)
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .card-inner {
+    transition: none !important;
+  }
+
+  .confetti-box {
+    display: none !important;
+  }
+}
+
+/* QA fix: hide the hanzi chip on picture cards until matched, otherwise the pair is a pure shape match */
+.card-word-chip { visibility: hidden; }
+.card.is-matched .card-word-chip { visibility: visible; }
+
+  </style>
+</head>
+<body>
+  <div class="paper-stage">
+    <!-- 剪纸风边角云朵与草丛装饰（内联 SVG） -->
+    <div class="deco-layer" aria-hidden="true">
+      <svg class="cutout-cloud cutout-cloud--left" viewBox="0 0 180 96" fill="none">
+        <path d="M26 78H150C164 78 174 68 174 55C174 43 165 34 153 33C149 16 133 6 115 8C103 9 93 16 88 26C81 20 71 18 61 21C49 24 41 34 40 46C26 47 16 57 16 69C16 74 20 78 26 78Z" fill="#4AA8FF" stroke="#3B2A20" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M34 72H144C155 72 163 64 163 54C163 45 155 38 145 37C141 22 128 14 113 16C102 17 94 23 89 32C82 27 73 25 65 28C55 31 48 39 47 49C36 50 28 57 28 66C28 70 31 72 34 72Z" fill="#FFFDF7" stroke="#3B2A20" stroke-width="3" stroke-linejoin="round"/>
+      </svg>
+
+      <svg class="cutout-cloud cutout-cloud--right" viewBox="0 0 180 96" fill="none">
+        <path d="M24 78H152C164 78 173 69 173 57C173 45 163 36 151 35C146 18 130 8 111 10C99 11 89 18 84 28C77 23 67 21 58 24C47 28 40 37 39 48C26 49 16 58 16 69C16 74 19 78 24 78Z" fill="#FFD6CC" stroke="#3B2A20" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M32 72H144C154 72 162 64 162 55C162 46 154 39 144 38C140 24 127 16 111 18C101 19 92 25 88 33C81 28 73 27 65 30C55 33 49 41 48 50C37 51 28 58 28 66C28 70 30 72 32 72Z" fill="#FFFDF7" stroke="#3B2A20" stroke-width="3" stroke-linejoin="round"/>
+      </svg>
+
+      <svg class="cutout-grass cutout-grass--left" viewBox="0 0 220 90" fill="none">
+        <path d="M-8 90L8 34L36 64L56 16L84 62L118 24L138 66L172 36L198 90H-8Z" fill="#3FA37C" stroke="#3B2A20" stroke-width="4" stroke-linejoin="round"/>
+        <circle cx="56" cy="48" r="10" fill="#FFC43D" stroke="#3B2A20" stroke-width="3"/>
+        <circle cx="132" cy="58" r="8" fill="#FF6B4A" stroke="#3B2A20" stroke-width="3"/>
+      </svg>
+
+      <svg class="cutout-grass cutout-grass--right" viewBox="0 0 220 90" fill="none">
+        <path d="M228 90L206 30L178 62L152 18L124 62L92 26L68 66L36 38L12 90H228Z" fill="#3FA37C" stroke="#3B2A20" stroke-width="4" stroke-linejoin="round"/>
+        <circle cx="152" cy="50" r="10" fill="#FF6B4A" stroke="#3B2A20" stroke-width="3"/>
+        <circle cx="88" cy="58" r="8" fill="#FFC43D" stroke="#3B2A20" stroke-width="3"/>
+      </svg>
+    </div>
+
+    <!-- 1. 首页 #screen-home -->
+    <section id="screen-home" class="screen is-active" aria-label="关卡选择首页">
+      <header class="home-header">
+        <div class="home-hero-badge">
+          <!-- 手绘感太阳装饰 SVG -->
+          <svg class="sun-deco" viewBox="0 0 100 100" aria-hidden="true">
+            <g stroke="#3B2A20" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="50,4 58,20 75,10 72,28 90,26 80,42 96,50 80,58 90,74 72,72 75,90 58,80 50,96 42,80 25,90 28,72 10,74 20,58 4,50 20,42 10,26 28,28 25,10 42,20" fill="#FF6B4A"/>
+              <circle cx="50" cy="50" r="27" fill="#FFC43D"/>
+              <circle cx="41" cy="45" r="3.2" fill="#3B2A20" stroke="none"/>
+              <circle cx="59" cy="45" r="3.2" fill="#3B2A20" stroke="none"/>
+              <circle cx="35" cy="52" r="4.5" fill="#FF6B4A" stroke="none" opacity="0.65"/>
+              <circle cx="65" cy="52" r="4.5" fill="#FF6B4A" stroke="none" opacity="0.65"/>
+              <path d="M41 56 Q50 64 59 56" fill="none" stroke="#3B2A20" stroke-width="3.5"/>
+            </g>
+          </svg>
+          <h1 class="home-title">认汉字翻翻乐</h1>
+        </div>
+        <p class="home-subtitle">点石头闯关 · 翻纸牌找朋友</p>
+      </header>
+
+      <div class="stone-trail-wrap">
+        <!-- 蜿蜒石头小路连接线 -->
+        <svg class="trail-svg" viewBox="0 0 400 500" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M110 65 C 290 95, 310 190, 275 235 C 235 285, 95 265, 115 340 C 135 415, 275 395, 290 445" fill="none" stroke="#3B2A20" stroke-width="8" stroke-dasharray="14 14" stroke-linecap="round" opacity="0.38"/>
+        </svg>
+        <div id="stone-trail" class="stone-trail" role="list"></div>
+      </div>
+    </section>
+
+    <!-- 2. 游戏页 #screen-game -->
+    <section id="screen-game" class="screen" aria-label="翻牌游戏" hidden>
+      <header class="game-topbar">
+        <button id="btn-home" type="button" class="btn-cutout" aria-label="回首页">
+          <span class="btn-icon" aria-hidden="true">🏡</span>
+          <span class="btn-label">回首页</span>
+        </button>
+
+        <div class="game-status-banner">
+          <h2 id="level-title" class="game-level-title">🐾 动物</h2>
+          <div class="game-moves-pill">
+            <span>步数</span>
+            <span id="moves">0</span>
+          </div>
+        </div>
+
+        <button id="btn-sound" type="button" class="btn-cutout" aria-pressed="true" aria-label="声音开关">
+          <span id="sound-icon" class="btn-icon" aria-hidden="true">🔊</span>
+          <span id="sound-label" class="btn-label">有声音</span>
+        </button>
+      </header>
+
+      <main id="board" aria-label="汉字配对牌桌"></main>
+    </section>
+
+    <!-- 3. 胜利层 #win-overlay -->
+    <div id="win-overlay" role="dialog" aria-modal="true" aria-labelledby="win-heading" hidden>
+      <div id="confetti-box" class="confetti-box" aria-hidden="true"></div>
+      <div class="win-card">
+        <h2 id="win-heading" class="win-banner">太棒了！</h2>
+        <div id="win-stars" aria-label="本关星级"></div>
+        <div class="win-actions">
+          <button id="btn-win-home" type="button" class="btn-cutout">
+            <span class="btn-icon" aria-hidden="true">🏡</span>
+            <span class="btn-label">回首页</span>
+          </button>
+          <button id="btn-next" type="button" class="btn-cutout">
+            <span id="btn-next-icon" class="btn-icon" aria-hidden="true">⏭️</span>
+            <span id="btn-next-label" class="btn-label">下一关</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+/**
+ * 认汉字翻翻乐 — 关卡数据
+ * 每关一个主题；items 多于 pairs，局内随机抽取 pairs 个配对。
+ */
+var window = (typeof window !== 'undefined') ? window : globalThis;
+
+window.FAN_DATA = {
+  levels: [
+    {
+      id: 'animals',
+      name: '动物',
+      emoji: '🐾',
+      pairs: 3,
+      items: [
+        { char: '猫', pinyin: 'māo', emoji: '🐱', word: '小猫' },
+        { char: '狗', pinyin: 'gǒu', emoji: '🐶', word: '小狗' },
+        { char: '兔', pinyin: 'tù', emoji: '🐰', word: '兔子' },
+        { char: '鱼', pinyin: 'yú', emoji: '🐟', word: '小鱼' },
+        { char: '鸟', pinyin: 'niǎo', emoji: '🐦', word: '小鸟' }
+      ]
+    },
+    {
+      id: 'fruits',
+      name: '水果',
+      emoji: '🍎',
+      pairs: 4,
+      items: [
+        { char: '苹', pinyin: 'píng', emoji: '🍎', word: '苹果' },
+        { char: '桃', pinyin: 'táo', emoji: '🍑', word: '桃子' },
+        { char: '梨', pinyin: 'lí', emoji: '🍐', word: '梨子' },
+        { char: '橙', pinyin: 'chéng', emoji: '🍊', word: '橙子' },
+        { char: '瓜', pinyin: 'guā', emoji: '🍉', word: '西瓜' },
+        { char: '蕉', pinyin: 'jiāo', emoji: '🍌', word: '香蕉' }
+      ]
+    },
+    {
+      id: 'nature',
+      name: '大自然',
+      emoji: '🌳',
+      pairs: 4,
+      items: [
+        { char: '花', pinyin: 'huā', emoji: '🌸', word: '花朵' },
+        { char: '树', pinyin: 'shù', emoji: '🌳', word: '大树' },
+        { char: '草', pinyin: 'cǎo', emoji: '🌿', word: '小草' },
+        { char: '山', pinyin: 'shān', emoji: '⛰️', word: '大山' },
+        { char: '水', pinyin: 'shuǐ', emoji: '💧', word: '清水' },
+        { char: '火', pinyin: 'huǒ', emoji: '🔥', word: '火花' }
+      ]
+    },
+    {
+      id: 'body',
+      name: '身体',
+      emoji: '👀',
+      pairs: 5,
+      items: [
+        { char: '眼', pinyin: 'yǎn', emoji: '👁️', word: '眼睛' },
+        { char: '耳', pinyin: 'ěr', emoji: '👂', word: '耳朵' },
+        { char: '手', pinyin: 'shǒu', emoji: '✋', word: '小手' },
+        { char: '脚', pinyin: 'jiǎo', emoji: '🦶', word: '小脚' },
+        { char: '牙', pinyin: 'yá', emoji: '🦷', word: '牙齿' },
+        { char: '鼻', pinyin: 'bí', emoji: '👃', word: '鼻子' },
+        { char: '口', pinyin: 'kǒu', emoji: '👄', word: '张口' }
+      ]
+    },
+    {
+      id: 'home',
+      name: '家里',
+      emoji: '🏠',
+      pairs: 6,
+      items: [
+        { char: '门', pinyin: 'mén', emoji: '🚪', word: '大门' },
+        { char: '床', pinyin: 'chuáng', emoji: '🛏️', word: '小床' },
+        { char: '衣', pinyin: 'yī', emoji: '👕', word: '衣服' },
+        { char: '鞋', pinyin: 'xié', emoji: '👟', word: '鞋子' },
+        { char: '书', pinyin: 'shū', emoji: '📕', word: '图书' },
+        { char: '灯', pinyin: 'dēng', emoji: '💡', word: '电灯' },
+        { char: '杯', pinyin: 'bēi', emoji: '🥤', word: '杯子' },
+        { char: '碗', pinyin: 'wǎn', emoji: '🥣', word: '小碗' }
+      ]
+    },
+    {
+      id: 'travel',
+      name: '出行',
+      emoji: '🚗',
+      pairs: 6,
+      items: [
+        { char: '车', pinyin: 'chē', emoji: '🚗', word: '汽车' },
+        { char: '船', pinyin: 'chuán', emoji: '⛵', word: '小船' },
+        { char: '飞', pinyin: 'fēi', emoji: '✈️', word: '飞机' },
+        { char: '马', pinyin: 'mǎ', emoji: '🐴', word: '小马' },
+        { char: '路', pinyin: 'lù', emoji: '🛣️', word: '马路' },
+        { char: '桥', pinyin: 'qiáo', emoji: '🌉', word: '大桥' },
+        { char: '铁', pinyin: 'tiě', emoji: '🚆', word: '地铁' },
+        { char: '伞', pinyin: 'sǎn', emoji: '☂️', word: '雨伞' }
+      ]
+    }
+  ]
+};
+
+if (typeof module !== 'undefined') module.exports = window.FAN_DATA;
+
+  </script>
+  <script>
+/**
+ * 认汉字翻翻乐 — 纯逻辑（不碰 DOM）。ES2017，浏览器与 node 双兼容。
+ * 浏览器：window.FanGame；node：module.exports。
+ */
+(function (root) {
+  'use strict';
+
+  var PROGRESS_KEY = 'daisy-fanfan-v1';
+
+  function makeRng(seed) {
+    var a = seed >>> 0;
+    return function () {
+      a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function shuffle(list, rng) {
+    var arr = list.slice();
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(rng() * (i + 1));
+      var tmp = arr[i];
+      arr[i] = arr[j];
+      arr[j] = tmp;
+    }
+    return arr;
+  }
+
+  function pickItems(level, rng) {
+    var shuffled = shuffle(level.items, rng);
+    return shuffled.slice(0, level.pairs);
+  }
+
+  function createGame(level, rng) {
+    var items = pickItems(level, rng);
+    var cards = [];
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      var base = {
+        key: it.char,
+        char: it.char,
+        pinyin: it.pinyin,
+        emoji: it.emoji,
+        word: it.word
+      };
+      cards.push({
+        key: base.key,
+        face: 'char',
+        char: base.char,
+        pinyin: base.pinyin,
+        emoji: base.emoji,
+        word: base.word
+      });
+      cards.push({
+        key: base.key,
+        face: 'pic',
+        char: base.char,
+        pinyin: base.pinyin,
+        emoji: base.emoji,
+        word: base.word
+      });
+    }
+    cards = shuffle(cards, rng);
+    for (var n = 0; n < cards.length; n++) {
+      cards[n].id = n;
+    }
+    return {
+      levelId: level.id,
+      pairs: level.pairs,
+      cards: cards,
+      open: [],
+      matched: [],
+      moves: 0,
+      done: false
+    };
+  }
+
+  function findCard(state, id) {
+    var cards = state.cards;
+    for (var i = 0; i < cards.length; i++) {
+      if (cards[i].id === id) return cards[i];
+    }
+    return null;
+  }
+
+  function hasId(list, id) {
+    for (var i = 0; i < list.length; i++) {
+      if (list[i] === id) return true;
+    }
+    return false;
+  }
+
+  function copyState(state) {
+    return {
+      levelId: state.levelId,
+      pairs: state.pairs,
+      cards: state.cards,
+      open: state.open.slice(),
+      matched: state.matched.slice(),
+      moves: state.moves,
+      done: state.done
+    };
+  }
+
+  function flip(state, id) {
+    if (state.open.length >= 2) {
+      return { state: state, event: 'ignored' };
+    }
+    var card = findCard(state, id);
+    if (!card || hasId(state.matched, id) || hasId(state.open, id)) {
+      return { state: state, event: 'ignored' };
+    }
+
+    if (state.open.length === 0) {
+      var first = copyState(state);
+      first.open = [id];
+      return { state: first, event: 'flip' };
+    }
+
+    var prev = findCard(state, state.open[0]);
+    var next = copyState(state);
+    next.moves = state.moves + 1;
+
+    if (prev && prev.key === card.key) {
+      next.open = [];
+      next.matched = state.matched.concat([state.open[0], id]);
+      if (next.matched.length === state.cards.length) {
+        next.done = true;
+        return { state: next, event: 'win' };
+      }
+      return { state: next, event: 'match' };
+    }
+
+    next.open = state.open.concat([id]);
+    return { state: next, event: 'mismatch' };
+  }
+
+  function settle(state) {
+    if (!state.open || state.open.length !== 2) return state;
+    var next = copyState(state);
+    next.open = [];
+    return next;
+  }
+
+  function stars(moves, pairs) {
+    if (moves <= pairs + 1) return 3;
+    if (moves <= pairs * 2) return 2;
+    return 1;
+  }
+
+  function defaultProgress() {
+    return { v: 1, unlocked: 1, stars: {} };
+  }
+
+  function loadProgress(storage) {
+    if (!storage || typeof storage.getItem !== 'function') return defaultProgress();
+    try {
+      var raw = storage.getItem(PROGRESS_KEY);
+      if (raw == null || raw === '') return defaultProgress();
+      var data = JSON.parse(raw);
+      if (!data || typeof data !== 'object' || Array.isArray(data)) return defaultProgress();
+      if (data.v != null && data.v !== 1) return defaultProgress();
+      var unlocked = data.unlocked;
+      if (typeof unlocked !== 'number' || !isFinite(unlocked) || unlocked < 1 || unlocked !== Math.floor(unlocked)) {
+        return defaultProgress();
+      }
+      var starsIn = data.stars;
+      if (starsIn == null) return defaultProgress();
+      if (typeof starsIn !== 'object' || Array.isArray(starsIn)) return defaultProgress();
+      var outStars = {};
+      var keys = Object.keys(starsIn);
+      for (var i = 0; i < keys.length; i++) {
+        var val = starsIn[keys[i]];
+        if (typeof val !== 'number' || !isFinite(val) || val < 0 || val > 3 || val !== Math.floor(val)) {
+          return defaultProgress();
+        }
+        outStars[keys[i]] = val;
+      }
+      return { v: 1, unlocked: unlocked, stars: outStars };
+    } catch (e) {
+      return defaultProgress();
+    }
+  }
+
+  function saveProgress(storage, progress) {
+    if (!storage || typeof storage.setItem !== 'function') return;
+    storage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+  }
+
+  function recordWin(progress, levelIndex, starCount, totalLevels) {
+    var prevStars = progress && progress.stars ? progress.stars : {};
+    var nextStars = {};
+    var keys = Object.keys(prevStars);
+    for (var i = 0; i < keys.length; i++) nextStars[keys[i]] = prevStars[keys[i]];
+    var key = String(levelIndex);
+    var prev = nextStars[key];
+    if (typeof prev !== 'number') prev = 0;
+    nextStars[key] = prev > starCount ? prev : starCount;
+    var unlocked = progress && typeof progress.unlocked === 'number' ? progress.unlocked : 1;
+    var cap = levelIndex + 2;
+    if (cap > totalLevels) cap = totalLevels;
+    if (cap > unlocked) unlocked = cap;
+    return { v: 1, unlocked: unlocked, stars: nextStars };
+  }
+
+  var FanGame = {
+    makeRng: makeRng,
+    pickItems: pickItems,
+    createGame: createGame,
+    flip: flip,
+    settle: settle,
+    stars: stars,
+    loadProgress: loadProgress,
+    saveProgress: saveProgress,
+    recordWin: recordWin
+  };
+
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = FanGame;
+  }
+  if (typeof window !== 'undefined') {
+    window.FanGame = FanGame;
+  } else if (root && typeof module === 'undefined') {
+    root.FanGame = FanGame;
+  }
+
+  return FanGame;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+  </script>
+  <script>
+(function () {
+  'use strict';
+
+  if (typeof document === 'undefined' || typeof window === 'undefined') {
+    return;
+  }
+
+  var SOUND_STORAGE_KEY = 'daisy-fanfan-sound';
+
+  // Safe localStorage wrapper
+  var safeStorage = {
+    getItem: function (key) {
+      try {
+        return window.localStorage ? window.localStorage.getItem(key) : null;
+      } catch (e) {
+        return null;
+      }
+    },
+    setItem: function (key, val) {
+      try {
+        if (window.localStorage) {
+          window.localStorage.setItem(key, val);
+        }
+      } catch (e) {
+        // Ignore storage quota or privacy errors
+      }
+    }
+  };
+
+  function prefersReducedMotion() {
+    try {
+      return !!(
+        window.matchMedia &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      );
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function loadSoundEnabled() {
+    var raw = safeStorage.getItem(SOUND_STORAGE_KEY);
+    if (raw === null) return true;
+    return raw !== '0' && raw !== 'false';
+  }
+
+  function saveSoundEnabled(enabled) {
+    safeStorage.setItem(SOUND_STORAGE_KEY, enabled ? '1' : '0');
+  }
+
+  // WebAudio synthesized "Ding" chime (no external audio)
+  var audioCtx = null;
+  function playDing() {
+    if (!app.soundEnabled) return;
+    try {
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      if (!audioCtx) {
+        audioCtx = new Ctx();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      var now = audioCtx.currentTime;
+      // Dual-tone bright picture-book xylophone ding (C6 -> G6)
+      var notes = [
+        { freq: 1046.5, start: 0, dur: 0.28, peak: 0.22 },
+        { freq: 1567.98, start: 0.07, dur: 0.42, peak: 0.26 }
+      ];
+
+      notes.forEach(function (n) {
+        var osc = audioCtx.createOscillator();
+        var gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(n.freq, now + n.start);
+
+        gain.gain.setValueAtTime(0.0001, now + n.start);
+        gain.gain.linearRampToValueAtTime(n.peak, now + n.start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + n.start + n.dur);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now + n.start);
+        osc.stop(now + n.start + n.dur + 0.02);
+      });
+    } catch (e) {
+      // Ignore WebAudio restrictions if blocked
+    }
+  }
+
+  // SpeechSynthesis helper (zh-CN, rate 0.8)
+  function speakText(text, interrupt) {
+    if (!app.soundEnabled || !text) return;
+    try {
+      if (!('speechSynthesis' in window) || typeof window.SpeechSynthesisUtterance !== 'function') {
+        return;
+      }
+      if (interrupt !== false) {
+        window.speechSynthesis.cancel();
+      }
+      var utter = new window.SpeechSynthesisUtterance(text);
+      utter.lang = 'zh-CN';
+      utter.rate = 0.8;
+      utter.pitch = 1.08;
+      window.speechSynthesis.speak(utter);
+    } catch (e) {
+      // Ignore speech synthesis errors in headless environments
+    }
+  }
+
+  function speakCard(card) {
+    if (!card) return;
+    if (card.face === 'char') {
+      speakText(card.char + '，' + card.word + '的' + card.char, true);
+    } else {
+      speakText(card.word, true);
+    }
+  }
+
+  // Inline SVG flower for card backs
+  function getCardBackFlowerSvg() {
+    return (
+      '<svg class="card-back-flower" viewBox="0 0 64 64" aria-hidden="true">' +
+      '<g stroke="#3B2A20" stroke-width="3" stroke-linejoin="round">' +
+      '<circle cx="32" cy="14" r="10" fill="#FFFDF7"/>' +
+      '<circle cx="49" cy="25" r="10" fill="#FFD6CC"/>' +
+      '<circle cx="43" cy="46" r="10" fill="#FFFDF7"/>' +
+      '<circle cx="21" cy="46" r="10" fill="#FFD6CC"/>' +
+      '<circle cx="15" cy="25" r="10" fill="#FFFDF7"/>' +
+      '<circle cx="32" cy="32" r="11" fill="#FF6B4A"/>' +
+      '<circle cx="29" cy="30" r="2" fill="#3B2A20" stroke="none"/>' +
+      '<circle cx="35" cy="30" r="2" fill="#3B2A20" stroke="none"/>' +
+      '<path d="M28 35 Q32 39 36 35" fill="none" stroke="#3B2A20" stroke-width="2.2" stroke-linecap="round"/>' +
+      '</g>' +
+      '</svg>'
+    );
+  }
+
+  var app = {
+    soundEnabled: true,
+    progress: null,
+    currentLevelIndex: 0,
+    state: null,
+    timers: [],
+
+    clearTimers: function () {
+      while (this.timers.length > 0) {
+        clearTimeout(this.timers.pop());
+      }
+    },
+
+    addTimer: function (fn, delay) {
+      var id = setTimeout(fn, delay);
+      this.timers.push(id);
+      return id;
+    }
+  };
+
+  function getLevels() {
+    return (window.FAN_DATA && Array.isArray(window.FAN_DATA.levels))
+      ? window.FAN_DATA.levels
+      : [];
+  }
+
+  function renderSoundButton() {
+    var btn = document.getElementById('btn-sound');
+    var icon = document.getElementById('sound-icon');
+    var label = document.getElementById('sound-label');
+    if (!btn) return;
+    btn.setAttribute('aria-pressed', app.soundEnabled ? 'true' : 'false');
+    if (icon) icon.textContent = app.soundEnabled ? '🔊' : '🔇';
+    if (label) label.textContent = app.soundEnabled ? '有声音' : '静音';
+  }
+
+  function renderHome() {
+    var trail = document.getElementById('stone-trail');
+    if (!trail) return;
+
+    var levels = getLevels();
+    var unlockedCount = (app.progress && typeof app.progress.unlocked === 'number')
+      ? app.progress.unlocked
+      : 1;
+    var starsMap = (app.progress && app.progress.stars) ? app.progress.stars : {};
+
+    trail.innerHTML = '';
+
+    levels.forEach(function (level, idx) {
+      var isUnlocked = idx < unlockedCount;
+      // progress.stars is keyed by level INDEX (recordWin takes levelIndex)
+      var starCount = Number(starsMap[idx] || starsMap[String(idx)] || 0);
+
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'level-btn' + (isUnlocked ? '' : ' is-locked');
+      btn.setAttribute('data-level', String(idx));
+      btn.setAttribute('data-level-id', String(level.id));
+      btn.setAttribute('role', 'listitem');
+      btn.setAttribute('aria-disabled', isUnlocked ? 'false' : 'true');
+      btn.setAttribute(
+        'aria-label',
+        '第' + (idx + 1) + '关 ' + level.name + (isUnlocked ? '，已得' + starCount + '颗星' : '，未解锁')
+      );
+
+      var starsHtml = '';
+      for (var s = 1; s <= 3; s++) {
+        starsHtml +=
+          '<span class="star-slot' + (s <= starCount ? ' is-lit' : '') + '" aria-hidden="true">' +
+          (s <= starCount ? '★' : '☆') +
+          '</span>';
+      }
+
+      var lockBadgeHtml = isUnlocked
+        ? ''
+        : '<span class="level-lock-badge" aria-hidden="true">🔒</span>';
+
+      btn.innerHTML =
+        '<span class="level-num-pill">' + (idx + 1) + '</span>' +
+        lockBadgeHtml +
+        '<span class="level-emoji" aria-hidden="true">' + level.emoji + '</span>' +
+        '<span class="level-name">' + level.name + '</span>' +
+        '<span class="level-stars" aria-label="' + starCount + '星">' + starsHtml + '</span>';
+
+      btn.addEventListener('click', function () {
+        if (!isUnlocked) {
+          btn.classList.remove('is-shaking');
+          // Trigger reflow to restart shake animation on repeated clicks
+          void btn.offsetWidth;
+          btn.classList.add('is-shaking');
+          app.addTimer(function () {
+            btn.classList.remove('is-shaking');
+          }, 450);
+          return;
+        }
+        startLevel(idx);
+      });
+
+      trail.appendChild(btn);
+    });
+  }
+
+  function showScreen(screenId) {
+    var home = document.getElementById('screen-home');
+    var game = document.getElementById('screen-game');
+    if (!home || !game) return;
+
+    if (screenId === 'home') {
+      home.hidden = false;
+      home.classList.add('is-active');
+      game.hidden = true;
+      game.classList.remove('is-active');
+    } else {
+      home.hidden = true;
+      home.classList.remove('is-active');
+      game.hidden = false;
+      game.classList.add('is-active');
+    }
+  }
+
+  function hideWinOverlay() {
+    var overlay = document.getElementById('win-overlay');
+    var confetti = document.getElementById('confetti-box');
+    if (overlay) {
+      overlay.classList.remove('is-visible');
+      overlay.hidden = true;
+    }
+    if (confetti) {
+      confetti.innerHTML = '';
+    }
+  }
+
+  function startLevel(levelIndex) {
+    var levels = getLevels();
+    var level = levels[levelIndex];
+    if (!level || !window.FanGame) return;
+
+    app.clearTimers();
+    hideWinOverlay();
+    app.currentLevelIndex = levelIndex;
+
+    var seed = (Date.now() & 0xffffffff) >>> 0;
+    var rng = window.FanGame.makeRng(seed);
+    app.state = window.FanGame.createGame(level, rng);
+
+    var titleEl = document.getElementById('level-title');
+    if (titleEl) {
+      titleEl.textContent = level.emoji + ' ' + level.name;
+    }
+
+    var movesEl = document.getElementById('moves');
+    if (movesEl) {
+      movesEl.textContent = '0';
+    }
+
+    renderBoard(rng);
+    showScreen('game');
+  }
+
+  function renderBoard(rng) {
+    var board = document.getElementById('board');
+    if (!board || !app.state) return;
+
+    board.innerHTML = '';
+    board.setAttribute('data-pairs', String(app.state.pairs));
+
+    app.state.cards.forEach(function (card, idx) {
+      var cardBtn = document.createElement('button');
+      cardBtn.type = 'button';
+      cardBtn.className = 'card';
+      cardBtn.setAttribute('data-id', String(card.id));
+      cardBtn.setAttribute('data-key', String(card.key));
+      cardBtn.setAttribute('data-face', String(card.face));
+      cardBtn.setAttribute('aria-label', '第' + (idx + 1) + '张牌');
+
+      // Deterministic/seeded slight rotation between -2deg and +2deg
+      var rVal = rng ? (rng() * 4 - 2) : (((idx * 37) % 41) - 20) / 10;
+      if (Math.abs(rVal) < 0.35) {
+        rVal = rVal < 0 ? -0.85 : 0.85;
+      }
+      cardBtn.style.setProperty('--card-rot', rVal.toFixed(2) + 'deg');
+
+      var frontContent = '';
+      if (card.face === 'char') {
+        frontContent =
+          '<span class="card-corner-dot" aria-hidden="true"></span>' +
+          '<span class="card-pinyin">' + card.pinyin + '</span>' +
+          '<span class="card-hanzi">' + card.char + '</span>';
+      } else {
+        frontContent =
+          '<span class="card-corner-dot" aria-hidden="true"></span>' +
+          '<span class="card-emoji" role="img" aria-label="' + card.word + '">' + card.emoji + '</span>' +
+          '<span class="card-word-chip">' + card.char + '</span>';
+      }
+
+      cardBtn.innerHTML =
+        '<div class="card-inner">' +
+          '<div class="card-face card-back">' +
+            getCardBackFlowerSvg() +
+          '</div>' +
+          '<div class="card-face card-front">' +
+            frontContent +
+          '</div>' +
+        '</div>';
+
+      cardBtn.addEventListener('click', function () {
+        onCardClick(card.id);
+      });
+
+      board.appendChild(cardBtn);
+    });
+  }
+
+  function getCardElement(id) {
+    var board = document.getElementById('board');
+    if (!board) return null;
+    return board.querySelector('.card[data-id="' + id + '"]');
+  }
+
+  function syncMoves() {
+    var movesEl = document.getElementById('moves');
+    if (movesEl && app.state) {
+      movesEl.textContent = String(app.state.moves);
+    }
+  }
+
+  function onCardClick(cardId) {
+    if (!app.state || !window.FanGame) return;
+
+    var prevMatched = app.state.matched ? app.state.matched.slice() : [];
+    var result = window.FanGame.flip(app.state, cardId);
+    if (!result || result.event === 'ignored') {
+      return;
+    }
+
+    app.state = result.state;
+    syncMoves();
+
+    var clickedCard = app.state.cards[cardId];
+    var clickedEl = getCardElement(cardId);
+    if (clickedEl) {
+      clickedEl.classList.add('is-open');
+    }
+
+    speakCard(clickedCard);
+
+    if (result.event === 'flip') {
+      return;
+    }
+
+    if (result.event === 'match' || result.event === 'win') {
+      // Identify newly matched cards (by key or matched array diff)
+      var newlyMatchedEls = [];
+      app.state.cards.forEach(function (c) {
+        var isNowMatched =
+          app.state.matched.indexOf(c.id) !== -1 ||
+          app.state.matched.indexOf(c.key) !== -1 ||
+          c.key === clickedCard.key;
+        var wasMatched =
+          prevMatched.indexOf(c.id) !== -1 ||
+          prevMatched.indexOf(c.key) !== -1;
+
+        if (isNowMatched && (!wasMatched || c.key === clickedCard.key)) {
+          var el = getCardElement(c.id);
+          if (el && !el.classList.contains('is-matched')) {
+            el.classList.add('is-open', 'is-matched');
+            newlyMatchedEls.push(el);
+          }
+        }
+      });
+
+      playDing();
+
+      app.addTimer(function () {
+        newlyMatchedEls.forEach(function (el) {
+          el.classList.add('is-settled-match');
+        });
+      }, 600);
+
+      if (result.event === 'win') {
+        handleWin();
+      }
+      return;
+    }
+
+    if (result.event === 'mismatch') {
+      var openIds = app.state.open ? app.state.open.slice() : [];
+      openIds.forEach(function (id) {
+        var el = getCardElement(id);
+        if (el) {
+          el.classList.add('is-open', 'is-mismatch');
+        }
+      });
+
+      app.addTimer(function () {
+        if (!app.state || !window.FanGame) return;
+        app.state = window.FanGame.settle(app.state);
+        openIds.forEach(function (id) {
+          var el = getCardElement(id);
+          if (el && !el.classList.contains('is-matched')) {
+            el.classList.remove('is-open', 'is-mismatch');
+          }
+        });
+      }, 900);
+    }
+  }
+
+  function spawnConfetti() {
+    if (prefersReducedMotion()) return;
+    var box = document.getElementById('confetti-box');
+    if (!box) return;
+    box.innerHTML = '';
+
+    var colors = ['#FF6B4A', '#3FA37C', '#4AA8FF', '#FFC43D', '#FFD6CC'];
+    for (var i = 0; i < 28; i++) {
+      var piece = document.createElement('span');
+      piece.className = 'confetti-piece';
+      piece.style.left = ((i * 3.6 + (i % 3) * 2) % 98).toFixed(1) + '%';
+      piece.style.backgroundColor = colors[i % colors.length];
+      piece.style.animationDelay = ((i % 7) * 90) + 'ms';
+      piece.style.animationDuration = (1700 + (i % 5) * 220) + 'ms';
+      box.appendChild(piece);
+    }
+  }
+
+  function handleWin() {
+    var levels = getLevels();
+    var earnedStars = window.FanGame.stars(app.state.moves, app.state.pairs);
+
+    try {
+      app.progress = window.FanGame.recordWin(
+        app.progress,
+        app.currentLevelIndex,
+        earnedStars,
+        levels.length
+      );
+      window.FanGame.saveProgress(safeStorage, app.progress);
+    } catch (e) {
+      // Ignore storage error
+    }
+
+    // Keep home stones synchronized with new unlock & star count
+    renderHome();
+
+    var overlay = document.getElementById('win-overlay');
+    var starsBox = document.getElementById('win-stars');
+    var nextLabel = document.getElementById('btn-next-label');
+    var nextIcon = document.getElementById('btn-next-icon');
+
+    var isLastLevel = app.currentLevelIndex >= levels.length - 1;
+    if (nextLabel) {
+      nextLabel.textContent = isLastLevel ? '再玩一次' : '下一关';
+    }
+    if (nextIcon) {
+      nextIcon.textContent = isLastLevel ? '🔄' : '⏭️';
+    }
+
+    if (starsBox) {
+      starsBox.innerHTML = '';
+      starsBox.setAttribute('data-stars', String(earnedStars));
+      var rotations = ['-8deg', '0deg', '8deg'];
+      for (var i = 1; i <= 3; i++) {
+        var starEl = document.createElement('span');
+        var isEarned = i <= earnedStars;
+        starEl.className = 'win-star' + (isEarned ? ' is-earned' : '');
+        starEl.style.setProperty('--star-rot', rotations[i - 1]);
+        starEl.textContent = isEarned ? '★' : '☆';
+        starsBox.appendChild(starEl);
+
+        (function (el, idx) {
+          if (prefersReducedMotion()) {
+            el.classList.add('is-popped');
+          } else {
+            app.addTimer(function () {
+              el.classList.add('is-popped');
+            }, idx * 160);
+          }
+        })(starEl, i);
+      }
+    }
+
+    if (overlay) {
+      overlay.hidden = false;
+      overlay.classList.add('is-visible');
+    }
+
+    spawnConfetti();
+    app.addTimer(function () {
+      speakText('太棒了！', false);
+    }, 280);
+  }
+
+  function bindGlobalEvents() {
+    var btnHome = document.getElementById('btn-home');
+    if (btnHome) {
+      btnHome.addEventListener('click', function () {
+        app.clearTimers();
+        hideWinOverlay();
+        renderHome();
+        showScreen('home');
+      });
+    }
+
+    var btnWinHome = document.getElementById('btn-win-home');
+    if (btnWinHome) {
+      btnWinHome.addEventListener('click', function () {
+        app.clearTimers();
+        hideWinOverlay();
+        renderHome();
+        showScreen('home');
+      });
+    }
+
+    var btnNext = document.getElementById('btn-next');
+    if (btnNext) {
+      btnNext.addEventListener('click', function () {
+        var levels = getLevels();
+        var isLastLevel = app.currentLevelIndex >= levels.length - 1;
+        var targetIndex = isLastLevel ? app.currentLevelIndex : app.currentLevelIndex + 1;
+        startLevel(targetIndex);
+      });
+    }
+
+    var btnSound = document.getElementById('btn-sound');
+    if (btnSound) {
+      btnSound.addEventListener('click', function () {
+        app.soundEnabled = !app.soundEnabled;
+        saveSoundEnabled(app.soundEnabled);
+        renderSoundButton();
+        if (!app.soundEnabled && 'speechSynthesis' in window) {
+          try {
+            window.speechSynthesis.cancel();
+          } catch (e) {}
+        }
+      });
+    }
+  }
+
+  function init() {
+    app.soundEnabled = loadSoundEnabled();
+    try {
+      app.progress = window.FanGame
+        ? window.FanGame.loadProgress(safeStorage)
+        : { v: 1, unlocked: 1, stars: {} };
+    } catch (e) {
+      app.progress = { v: 1, unlocked: 1, stars: {} };
+    }
+
+    renderSoundButton();
+    renderHome();
+    bindGlobalEvents();
+    showScreen('home');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+
+  </script>
+</body>
+</html>
