@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#BFE0EC">
+<title>小动物回家 · 迷宫</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- 手绘 SVG 素材库：全部内联，无外部图片 -->
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden"><defs>
+
+  <symbol id="star" viewBox="0 0 40 40">
+    <path d="M20 3.5l4.9 10.3 11.2 1.5-8.2 7.8 2 11.1L20 28.8 10.1 34.2l2-11.1-8.2-7.8 11.2-1.5z" fill="#F5C04A" stroke="#C98A1E" stroke-width="2.4" stroke-linejoin="round"/>
+    <path d="M14 16.5l4-.6 1.8-4" fill="none" stroke="#FFF1BF" stroke-width="2.4" stroke-linecap="round"/>
+  </symbol>
+
+  <symbol id="star0" viewBox="0 0 40 40">
+    <path d="M20 3.5l4.9 10.3 11.2 1.5-8.2 7.8 2 11.1L20 28.8 10.1 34.2l2-11.1-8.2-7.8 11.2-1.5z" fill="#E9E0CB" stroke="#CDBF9F" stroke-width="2.4" stroke-linejoin="round"/>
+  </symbol>
+
+  <symbol id="house" viewBox="0 0 100 100">
+    <ellipse cx="50" cy="90" rx="38" ry="6" fill="#2F5D50" opacity=".22"/>
+    <rect x="22" y="44" width="56" height="44" rx="6" fill="#FBF0DC" stroke="#8A5A33" stroke-width="3.5"/>
+    <path d="M12 50L50 16l38 34" fill="#E5869F" stroke="#A84E67" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="M14 50L50 18 86 50z" fill="#E5869F"/>
+    <path d="M28 43L50 24" stroke="#F3B3C4" stroke-width="4" stroke-linecap="round"/>
+    <rect x="42" y="62" width="16" height="26" rx="8" fill="#B07A47" stroke="#8A5A33" stroke-width="3"/>
+    <circle cx="54" cy="76" r="1.8" fill="#F5C04A"/>
+    <rect x="62" y="55" width="11" height="11" rx="2.5" fill="#F5C04A" stroke="#8A5A33" stroke-width="2.5"/>
+    <rect x="66" y="22" width="9" height="16" rx="2" fill="#B07A47" stroke="#8A5A33" stroke-width="3"/>
+  </symbol>
+
+  <!-- 小兔：白身、粉耳、蜂蜜色围巾 -->
+  <symbol id="pet-rabbit" viewBox="0 0 100 100">
+    <ellipse cx="50" cy="92" rx="26" ry="5" fill="#2F5D50" opacity=".25"/>
+    <g stroke="#5B4A5E" stroke-width="3" stroke-linejoin="round">
+      <path d="M36 42C28 22 30 6 37 6s10 16 9 34z" fill="#fff"/>
+      <path d="M64 42c8-20 6-36-1-36s-10 16-9 34z" fill="#fff"/>
+      <ellipse cx="50" cy="72" rx="24" ry="20" fill="#fff"/>
+      <circle cx="50" cy="48" r="22" fill="#fff"/>
+    </g>
+    <path d="M38 38c-4-12-3-24 0-26s5 12 4.5 24z" fill="#F7B9C8"/>
+    <path d="M62 38c4-12 3-24 0-26s-5 12-4.5 24z" fill="#F7B9C8"/>
+    <circle cx="42" cy="47" r="3.3" fill="#3B3350"/>
+    <circle cx="58" cy="47" r="3.3" fill="#3B3350"/>
+    <circle cx="43.2" cy="45.8" r="1.1" fill="#fff"/>
+    <circle cx="59.2" cy="45.8" r="1.1" fill="#fff"/>
+    <ellipse cx="36" cy="55" rx="4.5" ry="3" fill="#F7A8BC" opacity=".8"/>
+    <ellipse cx="64" cy="55" rx="4.5" ry="3" fill="#F7A8BC" opacity=".8"/>
+    <path d="M47 53l3 2.4 3-2.4" fill="#E5869F" stroke="#B85E78" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="M50 55.5v2.5m0 0c-1.5 2-4 2-5 .6m5-.6c1.5 2 4 2 5 .6" fill="none" stroke="#5B4A5E" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M34 86c3-6 10-6 12 0M54 86c2-6 9-6 12 0" fill="#fff" stroke="#5B4A5E" stroke-width="3" stroke-linecap="round"/>
+    <path d="M36 66c6 4 22 4 28 0" fill="none" stroke="#F5C04A" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="50" cy="69" r="3.6" fill="#E5869F" stroke="#A84E67" stroke-width="1.6"/>
+  </symbol>
+
+  <!-- 小猫：奶油橘、粉耳、莓果色围巾 -->
+  <symbol id="pet-cat" viewBox="0 0 100 100">
+    <ellipse cx="50" cy="92" rx="26" ry="5" fill="#2F5D50" opacity=".25"/>
+    <path d="M70 78c12 0 17-8 13-15" fill="none" stroke="#5B4A5E" stroke-width="9" stroke-linecap="round"/>
+    <path d="M70 78c12 0 17-8 13-15" fill="none" stroke="#F0B06A" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M31 40 27 15l20 11z" fill="#F6C98F" stroke="#5B4A5E" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M69 40 73 15 53 26z" fill="#F6C98F" stroke="#5B4A5E" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M33.5 34 31.5 21l10 6z" fill="#F7B9C8"/>
+    <path d="M66.5 34 68.5 21l-10 6z" fill="#F7B9C8"/>
+    <ellipse cx="50" cy="72" rx="24" ry="20" fill="#F6C98F" stroke="#5B4A5E" stroke-width="3"/>
+    <circle cx="50" cy="48" r="22" fill="#F6C98F" stroke="#5B4A5E" stroke-width="3"/>
+    <path d="M41 33.5l1.5 5M50 31.5v6M59 33.5l-1.5 5" fill="none" stroke="#D98B4A" stroke-width="2.4" stroke-linecap="round"/>
+    <circle cx="42" cy="47" r="3.3" fill="#3B3350"/>
+    <circle cx="58" cy="47" r="3.3" fill="#3B3350"/>
+    <circle cx="43.2" cy="45.8" r="1.1" fill="#fff"/>
+    <circle cx="59.2" cy="45.8" r="1.1" fill="#fff"/>
+    <ellipse cx="36" cy="55" rx="4.5" ry="3" fill="#F7A8BC" opacity=".8"/>
+    <ellipse cx="64" cy="55" rx="4.5" ry="3" fill="#F7A8BC" opacity=".8"/>
+    <ellipse cx="50" cy="56" rx="7" ry="5" fill="#FFF1D6" opacity=".9"/>
+    <path d="M47.5 53.5l2.5 1.8 2.5-1.8" fill="#E5869F" stroke="#B85E78" stroke-width="1.4" stroke-linejoin="round"/>
+    <path d="M50 55.3v2.4m0 0c-1.5 2-4 2-5 .6m5-.6c1.5 2 4 2 5 .6" fill="none" stroke="#5B4A5E" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M29 52h8M29 57l8-2M71 52h-8M71 57l-8-2" fill="none" stroke="#8A6A55" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M34 86c2-5 8-5 10 0M56 86c2-5 8-5 10 0" fill="#FFF1D6" stroke="#5B4A5E" stroke-width="3" stroke-linecap="round"/>
+    <path d="M34 65c5 3 11 4 16 4s11-1 16-4" fill="none" stroke="#E5869F" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="50" cy="70" r="3.4" fill="#F5C04A" stroke="#A84E67" stroke-width="1.4"/>
+  </symbol>
+
+  <!-- 小狗：奶油脸、棕色垂耳、叶绿色围巾 -->
+  <symbol id="pet-dog" viewBox="0 0 100 100">
+    <ellipse cx="50" cy="92" rx="26" ry="5" fill="#2F5D50" opacity=".25"/>
+    <path d="M73 76c11-1 14-9 10-15" fill="none" stroke="#5B4A5E" stroke-width="9" stroke-linecap="round"/>
+    <path d="M73 76c11-1 14-9 10-15" fill="none" stroke="#C98A4B" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M31 34c-10 3-12 19-5 26 7 5 13-4 10-14z" fill="#B07A47" stroke="#5B4A5E" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M69 34c10 3 12 19 5 26-7 5-13-4-10-14z" fill="#B07A47" stroke="#5B4A5E" stroke-width="3" stroke-linejoin="round"/>
+    <ellipse cx="50" cy="72" rx="24" ry="20" fill="#F8E3C4" stroke="#5B4A5E" stroke-width="3"/>
+    <circle cx="50" cy="48" r="22" fill="#F8E3C4" stroke="#5B4A5E" stroke-width="3"/>
+    <ellipse cx="41" cy="42" rx="7.5" ry="6.5" fill="#C98A4B" opacity=".85"/>
+    <circle cx="42" cy="48" r="3.3" fill="#3B3350"/>
+    <circle cx="58" cy="48" r="3.3" fill="#3B3350"/>
+    <circle cx="43.2" cy="46.8" r="1.1" fill="#fff"/>
+    <circle cx="59.2" cy="46.8" r="1.1" fill="#fff"/>
+    <ellipse cx="50" cy="58" rx="10" ry="7.5" fill="#FFF6E6" stroke="#5B4A5E" stroke-width="2.2"/>
+    <ellipse cx="50" cy="54.5" rx="4.4" ry="3.2" fill="#3B3350"/>
+    <path d="M50 57.7v2.2m0 0c-1.5 2-4 2-5 .6m5-.6c1.5 2 4 2 5 .6" fill="none" stroke="#5B4A5E" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M47.5 61h5c1 0 1 4-2.5 4s-3.5-4-2.5-4z" fill="#F08FA9" stroke="#C96A86" stroke-width="1.2" stroke-linejoin="round"/>
+    <ellipse cx="34" cy="56" rx="4.5" ry="3" fill="#F7A8BC" opacity=".7"/>
+    <ellipse cx="66" cy="56" rx="4.5" ry="3" fill="#F7A8BC" opacity=".7"/>
+    <path d="M36 86c2-5 8-5 10 0M54 86c2-5 8-5 10 0" fill="#FFF6E6" stroke="#5B4A5E" stroke-width="3" stroke-linecap="round"/>
+    <path d="M34 66c5 3 11 4 16 4s11-1 16-4" fill="none" stroke="#4F8A4A" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="50" cy="71" r="3.4" fill="#F5C04A" stroke="#A84E67" stroke-width="1.4"/>
+  </symbol>
+
+  <!-- 熊猫：黑白、蜜色围巾 -->
+  <symbol id="pet-panda" viewBox="0 0 100 100">
+    <ellipse cx="50" cy="92" rx="26" ry="5" fill="#2F5D50" opacity=".25"/>
+    <ellipse cx="26" cy="70" rx="8" ry="12" fill="#3B3350" stroke="#5B4A5E" stroke-width="3" transform="rotate(18 26 70)"/>
+    <ellipse cx="74" cy="70" rx="8" ry="12" fill="#3B3350" stroke="#5B4A5E" stroke-width="3" transform="rotate(-18 74 70)"/>
+    <ellipse cx="37" cy="88" rx="10" ry="6.5" fill="#3B3350" stroke="#5B4A5E" stroke-width="3"/>
+    <ellipse cx="63" cy="88" rx="10" ry="6.5" fill="#3B3350" stroke="#5B4A5E" stroke-width="3"/>
+    <ellipse cx="50" cy="71" rx="24" ry="21" fill="#fff" stroke="#5B4A5E" stroke-width="3"/>
+    <circle cx="30" cy="25" r="11" fill="#3B3350" stroke="#5B4A5E" stroke-width="3"/>
+    <circle cx="70" cy="25" r="11" fill="#3B3350" stroke="#5B4A5E" stroke-width="3"/>
+    <circle cx="50" cy="48" r="23" fill="#fff" stroke="#5B4A5E" stroke-width="3"/>
+    <ellipse cx="41" cy="47" rx="8" ry="9" fill="#3B3350" transform="rotate(-16 41 47)"/>
+    <ellipse cx="59" cy="47" rx="8" ry="9" fill="#3B3350" transform="rotate(16 59 47)"/>
+    <circle cx="42" cy="46" r="2.8" fill="#fff"/>
+    <circle cx="58" cy="46" r="2.8" fill="#fff"/>
+    <circle cx="42.8" cy="45.4" r="1.2" fill="#3B3350"/>
+    <circle cx="57.2" cy="45.4" r="1.2" fill="#3B3350"/>
+    <ellipse cx="50" cy="56" rx="4.5" ry="3.4" fill="#3B3350"/>
+    <path d="M50 59.4v2m0 0c-1.5 2-4 2-5 .6m5-.6c1.5 2 4 2 5 .6" fill="none" stroke="#5B4A5E" stroke-width="1.8" stroke-linecap="round"/>
+    <ellipse cx="34" cy="56" rx="4" ry="2.8" fill="#F7A8BC" opacity=".7"/>
+    <ellipse cx="66" cy="56" rx="4" ry="2.8" fill="#F7A8BC" opacity=".7"/>
+    <path d="M35 66c5 3 10 4 15 4s10-1 15-4" fill="none" stroke="#F5C04A" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="50" cy="71" r="3.4" fill="#E5869F" stroke="#A84E67" stroke-width="1.4"/>
+  </symbol>
+
+  <symbol id="arrow" viewBox="0 0 30 30">
+    <path d="M15 5l9 10h-5.5v10h-7V15H6z" fill="#4F8A4A" stroke="#2F5D50" stroke-width="2.2" stroke-linejoin="round"/>
+  </symbol>
+
+  <symbol id="bulb" viewBox="0 0 30 30">
+    <path d="M15 3a9 9 0 0 0-5 16.5V22h10v-2.5A9 9 0 0 0 15 3z" fill="#FFF7D6" stroke="#7A4E10" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M11 25.5h8" stroke="#7A4E10" stroke-width="2.4" stroke-linecap="round"/>
+  </symbol>
+
+  <symbol id="back" viewBox="0 0 24 24">
+    <path d="M15 4l-8 8 8 8" fill="none" stroke="#2F5D50" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+
+  <symbol id="lock" viewBox="0 0 30 30">
+    <rect x="6" y="13" width="18" height="13" rx="4" fill="#9CB59A"/>
+    <path d="M10 13V10a5 5 0 0 1 10 0v3" fill="none" stroke="#9CB59A" stroke-width="3"/>
+  </symbol>
+
+  <symbol id="sound-on" viewBox="0 0 30 30">
+    <path d="M4.5 12h5L16 7v16l-6.5-5h-5z" fill="#2F5D50" stroke="#2F5D50" stroke-width="1.4" stroke-linejoin="round"/>
+    <path d="M20 11a6 6 0 0 1 0 8M23 8a10 10 0 0 1 0 14" fill="none" stroke="#2F5D50" stroke-width="2.2" stroke-linecap="round"/>
+  </symbol>
+
+  <symbol id="sound-off" viewBox="0 0 30 30">
+    <path d="M4.5 12h5L16 7v16l-6.5-5h-5z" fill="#2F5D50" stroke="#2F5D50" stroke-width="1.4" stroke-linejoin="round"/>
+    <path d="M20 11l6 8M26 11l-6 8" fill="none" stroke="#2F5D50" stroke-width="2.2" stroke-linecap="round"/>
+  </symbol>
+
+  <pattern id="grass" width="60" height="60" patternUnits="userSpaceOnUse">
+    <rect width="60" height="60" fill="#B9DB98"/>
+    <path d="M8 14q2-6 4 0M11 14q1-5 3-1M38 40q2-6 4 0M41 40q1-5 3-1M30 8q1.5-4 3 0" stroke="#93C276" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <circle cx="50" cy="16" r="2" fill="#FFF6D8"/>
+    <circle cx="18" cy="46" r="1.8" fill="#F7C6D3"/>
+  </pattern>
+
+  <filter id="soft" x="-10%" y="-10%" width="120%" height="120%">
+    <feGaussianBlur stdDeviation="3"/>
+  </filter>
+
+</defs></svg>
+
+<!-- 背景：三层草坡 -->
+<svg class="hills" aria-hidden="true" viewBox="0 0 400 400" preserveAspectRatio="none">
+  <path d="M0 120C90 60 170 70 240 130S360 150 400 110V400H0z" fill="#CDE6B3"/>
+  <path d="M0 200C80 150 200 150 280 190S370 210 400 190V400H0z" fill="#B6D896"/>
+  <path d="M0 290C120 240 280 250 400 280V400H0z" fill="#A2CC82"/>
+</svg>
+
+<div class="app">
+
+  <svg class="cloud c1" aria-hidden="true" viewBox="0 0 150 50"><path d="M20 45a18 18 0 0 1 10-33 26 26 0 0 1 48-4 20 20 0 0 1 34 10 16 16 0 0 1 18 27z"/></svg>
+  <svg class="cloud c2" aria-hidden="true" viewBox="0 0 150 50"><path d="M20 45a18 18 0 0 1 10-33 26 26 0 0 1 48-4 20 20 0 0 1 34 10 16 16 0 0 1 18 27z"/></svg>
+
+  <button id="soundBtn" class="sound-btn" type="button" aria-pressed="true" aria-label="关闭声音">
+    <svg viewBox="0 0 30 30" aria-hidden="true"><use href="#sound-on"/></svg>
+  </button>
+
+  <!-- ========== 主页 ========== -->
+  <section id="home" class="screen active" aria-hidden="false">
+    <h1>小动物回家</h1>
+    <p class="sub">走出小迷宫，捡起星星，送小伙伴回到家</p>
+
+    <svg class="hero" viewBox="0 0 260 250" aria-hidden="true">
+      <ellipse cx="130" cy="219" rx="112" ry="18" fill="#9CC97F"/>
+      <use href="#house" x="126" y="66" width="120" height="120"/>
+      <g class="pet-bob">
+        <use data-pet-art href="#pet-rabbit" x="18" y="92" width="120" height="120"/>
+      </g>
+      <use href="#star" x="44" y="42" width="34" height="34"/>
+      <use href="#star" x="102" y="16" width="24" height="24"/>
+      <circle cx="212" cy="196" r="4" fill="#FFF6D8"/>
+      <circle cx="60" cy="200" r="3.4" fill="#F7C6D3"/>
+    </svg>
+
+    <p class="pick-label">选一个小伙伴</p>
+    <div class="pet-picker" role="group" aria-label="选择小动物">
+      <button class="pet-option" type="button" data-pet="rabbit" aria-pressed="true" aria-label="小兔">
+        <svg viewBox="0 0 100 100" aria-hidden="true"><use href="#pet-rabbit"/></svg>
+      </button>
+      <button class="pet-option" type="button" data-pet="cat" aria-pressed="false" aria-label="小猫">
+        <svg viewBox="0 0 100 100" aria-hidden="true"><use href="#pet-cat"/></svg>
+      </button>
+      <button class="pet-option" type="button" data-pet="dog" aria-pressed="false" aria-label="小狗">
+        <svg viewBox="0 0 100 100" aria-hidden="true"><use href="#pet-dog"/></svg>
+      </button>
+      <button class="pet-option" type="button" data-pet="panda" aria-pressed="false" aria-label="熊猫">
+        <svg viewBox="0 0 100 100" aria-hidden="true"><use href="#pet-panda"/></svg>
+      </button>
+    </div>
+
+    <button id="startBtn" class="btn" type="button">开始玩</button>
+
+    <div class="tally">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><use href="#star"/></svg>
+      已收集 <span id="totalStars">0</span> 颗
+    </div>
+  </section>
+
+  <!-- ========== 选关 ========== -->
+  <section id="levels" class="screen" aria-hidden="true">
+    <div class="bar">
+      <button class="icon-btn" id="homeBackBtn" type="button" aria-label="回到主页">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#back"/></svg>
+      </button>
+      <h2>选一关</h2>
+      <span class="bar-spacer"></span>
+    </div>
+    <div id="levelGrid" class="level-grid" role="group" aria-label="关卡列表"></div>
+    <p class="sub level-tip">通关后解锁下一关</p>
+  </section>
+
+  <!-- ========== 游戏 ========== -->
+  <section id="game" class="screen" aria-hidden="true">
+    <div class="bar game-bar">
+      <button class="icon-btn" id="backBtn" type="button" aria-label="返回选关">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#back"/></svg>
+      </button>
+      <h2 id="levelTitle">第 1 关</h2>
+      <div class="hud" aria-live="polite">
+        <svg viewBox="0 0 40 40" aria-hidden="true"><use href="#star"/></svg>
+        <span id="hudCollected">0</span>/<span id="hudTotal">0</span>
+      </div>
+    </div>
+
+    <div id="board" class="board" aria-label="迷宫">
+      <svg id="mazeSvg" aria-hidden="true"></svg>
+      <div id="pet" aria-hidden="true">
+        <svg viewBox="0 0 100 100"><g class="pet-hop"><use data-pet-art href="#pet-rabbit"/></g></svg>
+      </div>
+    </div>
+
+    <div class="dpad">
+      <span class="pad-spacer"></span>
+      <button class="dir-btn" type="button" data-dir="up" aria-label="向上">
+        <svg viewBox="0 0 30 30" aria-hidden="true"><use href="#arrow"/></svg>
+      </button>
+      <button id="hintBtn" class="hint-btn" type="button" aria-label="提示：高亮接下来三步">
+        <svg viewBox="0 0 30 30" aria-hidden="true"><use href="#bulb"/></svg>
+        <span>提示</span>
+      </button>
+      <button class="dir-btn" type="button" data-dir="left" aria-label="向左">
+        <svg viewBox="0 0 30 30" aria-hidden="true"><use href="#arrow"/></svg>
+      </button>
+      <button class="dir-btn" type="button" data-dir="down" aria-label="向下">
+        <svg viewBox="0 0 30 30" aria-hidden="true"><use href="#arrow"/></svg>
+      </button>
+      <button class="dir-btn" type="button" data-dir="right" aria-label="向右">
+        <svg viewBox="0 0 30 30" aria-hidden="true"><use href="#arrow"/></svg>
+      </button>
+    </div>
+
+    <p class="sub tip">在迷宫上滑一下，小动物也会跳</p>
+  </section>
+</div>
+
+<!-- ========== 过关浮层 ========== -->
+<div id="win" class="overlay" aria-hidden="true">
+  <div class="card win-card" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+    <h2 id="winTitle" class="win-title">到家啦！</h2>
+    <svg class="win-scene" viewBox="0 0 240 190" aria-hidden="true">
+      <ellipse cx="120" cy="170" rx="110" ry="16" fill="#B9DB98"/>
+      <use href="#house" x="96" y="30" width="140" height="140"/>
+      <use data-pet-art href="#pet-rabbit" x="16" y="70" width="100" height="100"/>
+      <use href="#star" x="30" y="34" width="26" height="26"/>
+      <use href="#star" x="196" y="62" width="20" height="20"/>
+    </svg>
+    <div id="winStars" class="win-stars">
+      <svg class="star empty" viewBox="0 0 40 40" aria-hidden="true"><use href="#star0"/></svg>
+      <svg class="star empty" viewBox="0 0 40 40" aria-hidden="true"><use href="#star0"/></svg>
+      <svg class="star empty" viewBox="0 0 40 40" aria-hidden="true"><use href="#star0"/></svg>
+    </div>
+    <p id="winMsg" class="sub" aria-live="polite"></p>
+    <div class="win-actions">
+      <button id="nextBtn" class="btn" type="button">下一关</button>
+      <button id="replayBtn" class="btn g" type="button">再玩一次</button>
+      <button id="toLevelsBtn" class="btn g" type="button">选关卡</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 全通关庆祝 ========== -->
+<div id="allDone" class="overlay" aria-hidden="true">
+  <div class="card all-card" role="dialog" aria-modal="true" aria-labelledby="allDoneTitle">
+    <h2 id="allDoneTitle" class="win-title">全部通关！</h2>
+    <svg class="all-scene" viewBox="0 0 260 200" aria-hidden="true">
+      <ellipse cx="130" cy="180" rx="124" ry="16" fill="#B9DB98"/>
+      <use href="#house" x="80" y="18" width="110" height="110"/>
+      <use href="#pet-rabbit" x="2" y="108" width="72" height="72"/>
+      <use href="#pet-cat" x="60" y="120" width="62" height="62"/>
+      <use href="#pet-dog" x="134" y="120" width="62" height="62"/>
+      <use href="#pet-panda" x="186" y="108" width="72" height="72"/>
+      <use href="#star" x="26" y="46" width="26" height="26"/>
+      <use href="#star" x="212" y="40" width="30" height="30"/>
+      <use href="#star" x="128" y="4" width="20" height="20"/>
+    </svg>
+    <p class="sub">12 关都走完啦，小伙伴们都到家了！</p>
+    <div class="all-total">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><use href="#star"/></svg>
+      <span id="allStars">0</span> / 36
+    </div>
+    <div class="win-actions">
+      <button id="allDoneLevelsBtn" class="btn" type="button">回到选关</button>
+      <button id="allDoneHomeBtn" class="btn g" type="button">回主页</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/game.js"></script>
+</body>
+</html>
